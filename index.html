@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PhotoVault</title>
+
+  <!-- Favicon: cornflower blue square with ◫ -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%236495ed'/><text x='50%25' y='55%25' text-anchor='middle' dominant-baseline='middle' font-size='18' fill='white'>◫</text></svg>" />
+
+  <!-- Google Fonts preconnect -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+  <!-- Base styles: prevent FOUC, match app background -->
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; background: #f2f4f7; font-family: sans-serif; }
+    #root { min-height: 100vh; }
+
+    /* Loading screen shown before React mounts */
+    #loading {
+      position: fixed; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      background: #f2f4f7; gap: 16px; z-index: 9999;
+    }
+    #loading .logo {
+      width: 48px; height: 48px; border-radius: 12px;
+      background: #6495ed; display: flex; align-items: center;
+      justify-content: center; font-size: 26px; color: #fff;
+      box-shadow: 0 4px 16px rgba(100,149,237,0.4);
+    }
+    #loading .title {
+      font-size: 20px; font-weight: 700; color: #1c2133; letter-spacing: -0.01em;
+    }
+    #loading .spinner {
+      width: 28px; height: 28px;
+      border: 3px solid #dce8fb;
+      border-top-color: #6495ed;
+      border-radius: 50%;
+      animation: spin 0.75s linear infinite;
+    }
+    #loading .msg {
+      font-size: 13px; color: #8e9ab0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+
+  <!--
+    Import map: tells the browser where to resolve bare specifiers like
+    "react" and "react-dom/client" without a bundler.
+    Using esm.sh which serves pre-bundled ESM for any npm package.
+  -->
+  <script type="importmap">
+  {
+    "imports": {
+      "react":           "https://esm.sh/react@18.3.1",
+      "react-dom":       "https://esm.sh/react-dom@18.3.1",
+      "react-dom/client":"https://esm.sh/react-dom@18.3.1/client"
+    }
+  }
+  </script>
+
+  <!-- Babel standalone: transpiles JSX in <script type="text/babel"> tags -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.10/babel.min.js"
+          crossorigin="anonymous"
+          referrerpolicy="no-referrer"></script>
+</head>
+<body>
+
+  <!-- Loading screen (hidden once React mounts) -->
+  <div id="loading">
+    <div class="logo">◫</div>
+    <div class="title">PhotoVault</div>
+    <div class="spinner"></div>
+    <div class="msg">Loading application…</div>
+  </div>
+
+  <!-- React mount point -->
+  <div id="root"></div>
+
+  <!--
+    Entry point module: imports React + ReactDOM and mounts the app.
+    type="module" is required for import maps to work.
+    data-type="module" tells Babel to treat this as ESM.
+  -->
+  <script type="module">
+    import { createRoot } from "react-dom/client";
+
+    // Babel is loaded above; configure it to handle JSX + modern JS
+    window.Babel.registerPreset("app", {
+      presets: [
+        [window.Babel.availablePresets["env"],   { targets: { esmodules: true }, modules: false }],
+        [window.Babel.availablePresets["react"], {}],
+      ],
+    });
+
+    // Dynamically load and transpile photovault.jsx
+    async function loadApp() {
+      // Fetch the raw JSX source
+      const res = await fetch("./photovault.jsx");
+      if (!res.ok) throw new Error(`Failed to load photovault.jsx: ${res.status} ${res.statusText}`);
+      const source = await res.text();
+
+      // Transpile with Babel in the browser
+      const { code } = window.Babel.transform(source, {
+        presets: ["app"],
+        filename: "photovault.jsx",
+        sourceType: "module",
+      });
+
+      // Turn the transpiled code into a data URL and import it as a module
+      // (import maps apply to inline scripts but not data URLs, so we
+      //  replace bare specifiers with the CDN URLs manually)
+      const patched = code
+        .replace(/from\s+"react"/g,            'from "https://esm.sh/react@18.3.1"')
+        .replace(/from\s+'react'/g,            "from 'https://esm.sh/react@18.3.1'")
+        .replace(/from\s+"react-dom\/client"/g,'from "https://esm.sh/react-dom@18.3.1/client"')
+        .replace(/from\s+'react-dom\/client'/g,"from 'https://esm.sh/react-dom@18.3.1/client'")
+        .replace(/from\s+"react-dom"/g,        'from "https://esm.sh/react-dom@18.3.1"')
+        .replace(/from\s+'react-dom'/g,        "from 'https://esm.sh/react-dom@18.3.1'");
+
+      const blob    = new Blob([patched], { type: "application/javascript" });
+      const blobUrl = URL.createObjectURL(blob);
+      const mod     = await import(blobUrl);
+      URL.revokeObjectURL(blobUrl);
+
+      // Mount the default export (the PhotoVault component)
+      const App  = mod.default;
+      const root = createRoot(document.getElementById("root"));
+      root.render(
+        window.React
+          ? window.React.createElement(App)
+          : (await import("https://esm.sh/react@18.3.1")).createElement(App)
+      );
+
+      // Hide loading screen
+      document.getElementById("loading").style.display = "none";
+    }
+
+    loadApp().catch(err => {
+      const el = document.getElementById("loading");
+      el.innerHTML = `
+        <div style="text-align:center;padding:40px;max-width:480px">
+          <div style="font-size:36px;margin-bottom:16px">⚠</div>
+          <div style="font-size:18px;font-weight:700;color:#1c2133;margin-bottom:8px">Failed to load PhotoVault</div>
+          <div style="font-size:13px;color:#526080;margin-bottom:20px;line-height:1.6">${err.message}</div>
+          <div style="font-size:12px;color:#8e9ab0;line-height:1.6">
+            Make sure <code style="background:#eef0f4;padding:2px 6px;border-radius:4px">photovault.jsx</code>
+            is in the same folder as this file and you are serving over HTTP/HTTPS
+            (not <code style="background:#eef0f4;padding:2px 6px;border-radius:4px">file://</code>).
+          </div>
+          <button onclick="location.reload()" style="margin-top:20px;padding:9px 20px;background:#6495ed;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">
+            Retry
+          </button>
+        </div>
+      `;
+    });
+  </script>
+
+</body>
+</html>
