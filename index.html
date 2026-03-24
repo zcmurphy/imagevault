@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>PhotoVault</title>
 
-  <!-- Favicon: cornflower blue square with ◫ -->
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%236495ed'/><text x='50%25' y='55%25' text-anchor='middle' dominant-baseline='middle' font-size='18' fill='white'>◫</text></svg>" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -15,30 +14,27 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { height: 100%; background: #f2f4f7; font-family: sans-serif; }
     #root { min-height: 100vh; }
-
     #loading {
-      position: fixed; inset: 0;
-      display: flex; flex-direction: column;
+      position: fixed; inset: 0; display: flex; flex-direction: column;
       align-items: center; justify-content: center;
       background: #f2f4f7; gap: 16px; z-index: 9999;
     }
     #loading .logo {
-      width: 48px; height: 48px; border-radius: 12px;
-      background: #6495ed; display: flex; align-items: center;
-      justify-content: center; font-size: 26px; color: #fff;
-      box-shadow: 0 4px 16px rgba(100,149,237,0.4);
+      width: 48px; height: 48px; border-radius: 12px; background: #6495ed;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px; color: #fff; box-shadow: 0 4px 16px rgba(100,149,237,0.4);
     }
-    #loading .title { font-size: 20px; font-weight: 700; color: #1c2133; letter-spacing: -0.01em; }
+    #loading .title  { font-size: 20px; font-weight: 700; color: #1c2133; }
     #loading .spinner {
-      width: 28px; height: 28px;
-      border: 3px solid #dce8fb; border-top-color: #6495ed;
-      border-radius: 50%; animation: spin 0.75s linear infinite;
+      width: 28px; height: 28px; border: 3px solid #dce8fb;
+      border-top-color: #6495ed; border-radius: 50%;
+      animation: spin 0.75s linear infinite;
     }
     #loading .msg { font-size: 13px; color: #8e9ab0; }
     @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 
-  <!-- Babel standalone for in-browser JSX transpilation -->
+  <!-- Babel standalone: in-browser JSX transpilation -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.10/babel.min.js"
           crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 </head>
@@ -54,68 +50,72 @@
   <div id="root"></div>
 
   <script type="module">
-    // CDN base for React 18
     const REACT     = "https://esm.sh/react@18.3.1";
     const REACT_DOM = "https://esm.sh/react-dom@18.3.1";
 
-    // Pre-import React so window.React is available for any legacy code paths
-    const React    = await import(REACT);
-    const ReactDOM = await import(`${REACT_DOM}/client`);
-    window.React   = React;   // safety net
+    // Import React first so we can expose it as a global.
+    // Babel's classic JSX transform emits React.createElement() calls —
+    // the transpiled blob module needs React in its own scope.
+    // We achieve this by prepending "const React = [imported module]"
+    // directly into the transpiled source before creating the blob.
+    const ReactModule    = await import(REACT);
+    const ReactDOMModule = await import(`${REACT_DOM}/client`);
 
-    // Configure Babel with the AUTOMATIC JSX runtime.
-    // This compiles <Foo/> → _jsx(Foo, {}) using imported helpers instead of
-    // React.createElement — so React never needs to be a global variable.
+    // Configure Babel — use the classic runtime (default).
+    // We inject React into the blob ourselves via a prepended const.
     window.Babel.registerPreset("app", {
       presets: [
         [window.Babel.availablePresets["env"], {
-          targets: { esmodules: true },
-          modules: false,
+          targets:  { esmodules: true },
+          modules:  false,
         }],
         [window.Babel.availablePresets["react"], {
-          runtime: "automatic",   // ← KEY FIX: no React global required
-          importSource: "react",
+          runtime: "classic",   // emits React.createElement — React must be in scope
         }],
       ],
     });
 
     async function loadApp() {
+      // ── 1. Fetch the JSX source ──────────────────────────────────────────────
       const res = await fetch("./photovault.jsx");
       if (!res.ok) throw new Error(`Failed to load photovault.jsx: ${res.status} ${res.statusText}`);
       const source = await res.text();
 
-      // Transpile JSX → JS
+      // ── 2. Transpile JSX → ES module JS ─────────────────────────────────────
       const { code } = window.Babel.transform(source, {
         presets:    ["app"],
         filename:   "photovault.jsx",
         sourceType: "module",
       });
 
-      // Blob URL modules don't inherit import maps, so rewrite every bare
-      // React specifier to its full CDN URL before importing.
-      const patched = code
-        // Standard React imports
-        .replace(/from\s+"react\/jsx-runtime"/g,     `from "${REACT}/jsx-runtime"`)
-        .replace(/from\s+'react\/jsx-runtime'/g,     `from '${REACT}/jsx-runtime'`)
-        .replace(/from\s+"react\/jsx-dev-runtime"/g, `from "${REACT}/jsx-dev-runtime"`)
-        .replace(/from\s+'react\/jsx-dev-runtime'/g, `from '${REACT}/jsx-dev-runtime'`)
-        .replace(/from\s+"react-dom\/client"/g,      `from "${REACT_DOM}/client"`)
-        .replace(/from\s+'react-dom\/client'/g,      `from '${REACT_DOM}/client'`)
-        .replace(/from\s+"react-dom"/g,              `from "${REACT_DOM}"`)
-        .replace(/from\s+'react-dom'/g,              `from '${REACT_DOM}'`)
-        .replace(/from\s+"react"/g,                  `from "${REACT}"`)
-        .replace(/from\s+'react'/g,                  `from '${REACT}'`);
+      // ── 3. Rewrite bare specifiers → full CDN URLs ───────────────────────────
+      // Blob URL modules don't inherit the page's import map, so every
+      // "react" / "react-dom" import must become an absolute CDN URL.
+      let patched = code
+        .replace(/from\s+"react-dom\/client"/g, `from "${REACT_DOM}/client"`)
+        .replace(/from\s+'react-dom\/client'/g, `from '${REACT_DOM}/client'`)
+        .replace(/from\s+"react-dom"/g,         `from "${REACT_DOM}"`)
+        .replace(/from\s+'react-dom'/g,         `from '${REACT_DOM}'`)
+        .replace(/from\s+"react"/g,             `from "${REACT}"`)
+        .replace(/from\s+'react'/g,             `from '${REACT}'`);
 
-      // Import as a blob-URL ES module
+      // ── 4. Inject React into the blob's own scope ────────────────────────────
+      // Babel's classic transform calls React.createElement() at the top level.
+      // Even though we imported React above, ES module scope is isolated —
+      // the blob cannot see variables from the parent module.
+      // Prepending this line gives the blob its own `React` binding that
+      // resolves to the same already-cached module (no extra network request).
+      patched = `import React from "${REACT}";\n` + patched;
+
+      // ── 5. Load as a blob ES module and mount ────────────────────────────────
       const blob    = new Blob([patched], { type: "application/javascript" });
       const blobUrl = URL.createObjectURL(blob);
       const mod     = await import(blobUrl);
       URL.revokeObjectURL(blobUrl);
 
-      // Mount the app
       const App  = mod.default;
-      const root = ReactDOM.createRoot(document.getElementById("root"));
-      root.render(React.createElement(App));
+      const root = ReactDOMModule.createRoot(document.getElementById("root"));
+      root.render(ReactModule.createElement(App));
 
       document.getElementById("loading").style.display = "none";
     }
@@ -128,7 +128,8 @@
           <div style="font-size:13px;color:#526080;margin-bottom:20px;line-height:1.6">${err.message}</div>
           <div style="font-size:12px;color:#8e9ab0;line-height:1.6">
             Make sure <code style="background:#eef0f4;padding:2px 6px;border-radius:4px">photovault.jsx</code>
-            is in the same folder as this file and is served over HTTPS (not <code style="background:#eef0f4;padding:2px 6px;border-radius:4px">file://</code>).
+            is in the same folder as this file and is served over HTTPS
+            (not <code style="background:#eef0f4;padding:2px 6px;border-radius:4px">file://</code>).
           </div>
           <button onclick="location.reload()" style="margin-top:20px;padding:9px 20px;background:#6495ed;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">
             Retry
