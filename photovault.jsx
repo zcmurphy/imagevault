@@ -1,32 +1,34 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 
 // ── Palette ────────────────────────────────────────────────────────────────────
+// Modern Minimalist theme — charcoal/slate/light-grey foundation, cornflower blue accent
 const C = {
-  bg:        "#f2f4f7",
-  surface:   "#ffffff",
-  surface2:  "#eef0f4",
-  border:    "#dde1ea",
-  border2:   "#c6ccd8",
-  text:      "#1c2133",
-  textMid:   "#526080",
-  textMute:  "#8e9ab0",
-  blue:      "#6495ed",
-  blueDark:  "#4a7ad8",
-  blueLight: "#dce8fb",
-  blueMid:   "#a8c2f5",
-  red:       "#e05555",
-  green:     "#3fa876",
+  bg:        "#f5f5f5",   // light grey page background
+  surface:   "#ffffff",   // white cards/panels
+  surface2:  "#efefef",   // inset / input backgrounds (light grey)
+  border:    "#d3d3d3",   // light grey borders (theme: Light Gray)
+  border2:   "#b0b8c1",   // slightly stronger border
+  text:      "#36454f",   // charcoal — primary text
+  textMid:   "#708090",   // slate gray — secondary text
+  textMute:  "#9eaab5",   // muted slate — placeholder/hints
+  blue:      "#6495ed",   // cornflower blue — sole accent colour
+  blueDark:  "#4a7ad8",   // accent hover
+  blueLight: "#e8f0fd",   // very light blue tint
+  blueMid:   "#b8cef5",   // mid blue for borders
+  red:       "#c0392b",   // desaturated red — charcoal-harmonious
+  green:     "#27ae60",   // desaturated green
 };
 
+// Minimalist tag palette — muted, desaturated tones harmonious with charcoal/slate
 const TAG_PALETTE = [
-  { bg: "#dce8fb", text: "#3464c8", border: "#a8c2f5" },
-  { bg: "#fde8d6", text: "#c05020", border: "#f4b080" },
-  { bg: "#d8f5ea", text: "#1e7a50", border: "#80d4aa" },
-  { bg: "#f0dafc", text: "#8030b8", border: "#cca0ec" },
-  { bg: "#fef4c8", text: "#9a6e00", border: "#f0cc60" },
-  { bg: "#fbd8e8", text: "#c02858", border: "#f4a0c0" },
-  { bg: "#d8f2fc", text: "#1878a8", border: "#80ccec" },
-  { bg: "#e8fcd8", text: "#3c7a18", border: "#a0e880" },
+  { bg: "#e8f0fd", text: "#3a5fa8", border: "#b8cef5" },  // blue
+  { bg: "#fde8e8", text: "#a03030", border: "#f0b0b0" },  // red
+  { bg: "#e8f5ee", text: "#206040", border: "#90d0a8" },  // green
+  { bg: "#f0e8f8", text: "#6030a0", border: "#c8a0e8" },  // purple
+  { bg: "#fdf5e0", text: "#806000", border: "#e8cc80" },  // amber
+  { bg: "#fde8f2", text: "#903060", border: "#f0a8cc" },  // rose
+  { bg: "#e0f4f8", text: "#1a6878", border: "#90cce0" },  // teal
+  { bg: "#eef8e8", text: "#3a6820", border: "#a8d890" },  // sage
 ];
 function tagStyle(tag) {
   let h = 0;
@@ -410,7 +412,7 @@ async function checkDuplicate(contentHash, fingerprint) {
 function TagPill({ tag, onRemove, small }) {
   const s = tagStyle(tag);
   return (
-    <span style={{ display:"inline-flex", alignItems:"center", gap:3, background:s.bg, color:s.text, border:`1px solid ${s.border}`, borderRadius:20, padding:small?"1px 8px":"3px 10px", fontSize:small?11:12, fontFamily:"'Plus Jakarta Sans',sans-serif", fontWeight:500, whiteSpace:"nowrap" }}>
+    <span style={{ display:"inline-flex", alignItems:"center", gap:3, background:s.bg, color:s.text, border:`1px solid ${s.border}`, borderRadius:20, padding:small?"1px 8px":"3px 10px", fontSize:small?11:12, fontFamily:"'DM Sans',sans-serif", fontWeight:500, whiteSpace:"nowrap" }}>
       {tag}
       {onRemove && (
         <button onClick={()=>onRemove(tag)} style={{ background:"none", border:"none", color:s.text, cursor:"pointer", padding:0, fontSize:14, lineHeight:1, opacity:0.55, marginLeft:1 }}>×</button>
@@ -432,7 +434,7 @@ function TagInput({ tags, onChange }) {
       <input value={val} onChange={e => setVal(e.target.value)}
         onKeyDown={e => { if (e.key === "Enter" || e.key === ",") { e.preventDefault(); add(); } }}
         placeholder="add tag…"
-        style={{ background:"transparent", border:"none", outline:"none", color:C.text, fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:13, width:90, padding:"2px 0" }}
+        style={{ background:"transparent", border:"none", outline:"none", color:C.text, fontFamily:"'DM Sans',sans-serif", fontSize:13, width:90, padding:"2px 0" }}
       />
     </div>
   );
@@ -525,7 +527,7 @@ function UploadModal({ onUpload, onClose }) {
   };
 
   const FieldLabel = ({ label }) => (
-    <label style={{ display:"block", color:C.textMid, fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:11, fontWeight:700, marginBottom:6, letterSpacing:"0.07em", textTransform:"uppercase" }}>{label}</label>
+    <label style={{ display:"block", color:C.textMid, fontFamily:"'DM Sans',sans-serif", fontSize:11, fontWeight:700, marginBottom:6, letterSpacing:"0.07em", textTransform:"uppercase" }}>{label}</label>
   );
 
   return (
@@ -534,7 +536,7 @@ function UploadModal({ onUpload, onClose }) {
       <div style={{ background:C.surface, borderRadius:16, border:`1px solid ${C.border}`, width:560, maxWidth:"95vw", maxHeight:"90vh", overflowY:"auto", boxShadow:"0 20px 60px rgba(28,33,80,0.16)", padding:32 }}>
 
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:24 }}>
-          <h2 style={{ margin:0, fontFamily:"'Plus Jakarta Sans',sans-serif", color:C.text, fontSize:22, fontWeight:700 }}>Ingest Images</h2>
+          <h2 style={{ margin:0, fontFamily:"'DM Sans',sans-serif", color:C.text, fontSize:22, fontWeight:700 }}>Ingest Images</h2>
           <button onClick={onClose} style={{ background:"none", border:"none", color:C.textMute, cursor:"pointer", fontSize:22 }}>×</button>
         </div>
 
@@ -551,17 +553,17 @@ function UploadModal({ onUpload, onClose }) {
               <div style={{ width:44, height:44, borderRadius:12, background:C.blueLight, margin:"0 auto 12px", display:"flex", alignItems:"center", justifyContent:"center" }}>
                 <span style={{ color:C.blue, fontSize:20 }}>↑</span>
               </div>
-              <div style={{ color:C.textMid, fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:14 }}>
+              <div style={{ color:C.textMid, fontFamily:"'DM Sans',sans-serif", fontSize:14 }}>
                 Drop images here or <span style={{ color:C.blue, fontWeight:600 }}>click to browse</span>
               </div>
-              <div style={{ color:C.textMute, fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:12, marginTop:4 }}>JPG · PNG · GIF · WEBP</div>
+              <div style={{ color:C.textMute, fontFamily:"'DM Sans',sans-serif", fontSize:12, marginTop:4 }}>JPG · PNG · GIF · WEBP</div>
             </>
           ) : (
             <>
               <div style={{ display:"flex", flexWrap:"wrap", gap:8, justifyContent:"center", marginBottom:10 }}>
                 {previews.map((u, i) => <img key={i} src={u} alt="" style={{ width:68, height:68, objectFit:"cover", borderRadius:6, border:`1px solid ${C.border}` }} />)}
               </div>
-              <div style={{ color:C.blue, fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:12, fontWeight:600 }}>
+              <div style={{ color:C.blue, fontFamily:"'DM Sans',sans-serif", fontSize:12, fontWeight:600 }}>
                 {files.length} image{files.length !== 1 ? "s" : ""} selected — click to change
               </div>
             </>
@@ -573,7 +575,7 @@ function UploadModal({ onUpload, onClose }) {
           <FieldLabel label="Program Name" />
           <div style={{ position:"relative" }}>
             <select value={program} onChange={e => setProgram(e.target.value)}
-              style={{ width:"100%", appearance:"none", WebkitAppearance:"none", background:C.surface2, border:`1px solid ${C.border}`, borderRadius:8, padding:"10px 36px 10px 12px", color:program ? C.text : C.textMute, fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:13, outline:"none", cursor:"pointer", transition:"all 0.2s" }}>
+              style={{ width:"100%", appearance:"none", WebkitAppearance:"none", background:C.surface2, border:`1px solid ${C.border}`, borderRadius:8, padding:"10px 36px 10px 12px", color:program ? C.text : C.textMute, fontFamily:"'DM Sans',sans-serif", fontSize:13, outline:"none", cursor:"pointer", transition:"all 0.2s" }}>
               <option value="">— Select a program —</option>
               {ProgramNames.map(p => <option key={p} value={p}>{p}</option>)}
             </select>
@@ -593,7 +595,7 @@ function UploadModal({ onUpload, onClose }) {
         <div style={{ marginBottom:24 }}>
           <FieldLabel label="Comment" />
           <textarea value={comment} onChange={e => setComment(e.target.value)} placeholder="Describe these images…" rows={3}
-            style={{ width:"100%", boxSizing:"border-box", background:C.surface2, border:`1px solid ${C.border}`, borderRadius:8, padding:"10px 12px", color:C.text, fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:13, resize:"vertical", outline:"none", transition:"all 0.2s" }}
+            style={{ width:"100%", boxSizing:"border-box", background:C.surface2, border:`1px solid ${C.border}`, borderRadius:8, padding:"10px 12px", color:C.text, fontFamily:"'DM Sans',sans-serif", fontSize:13, resize:"vertical", outline:"none", transition:"all 0.2s" }}
           />
         </div>
 
@@ -602,10 +604,10 @@ function UploadModal({ onUpload, onClose }) {
           <div style={{ background:"#fff8e6", border:"1px solid #f0d080", borderRadius:8, padding:"10px 14px", marginBottom:16, display:"flex", gap:10, alignItems:"flex-start" }}>
             <span style={{ fontSize:16, flexShrink:0 }}>⚠</span>
             <div>
-              <div style={{ color:"#7a5800", fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:12, fontWeight:700, marginBottom:3 }}>
+              <div style={{ color:"#7a5800", fontFamily:"'DM Sans',sans-serif", fontSize:12, fontWeight:700, marginBottom:3 }}>
                 {duplicates.length} duplicate{duplicates.length !== 1 ? "s" : ""} skipped
               </div>
-              <div style={{ color:"#9a7200", fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:11 }}>{duplicates.join(", ")}</div>
+              <div style={{ color:"#9a7200", fontFamily:"'DM Sans',sans-serif", fontSize:11 }}>{duplicates.join(", ")}</div>
             </div>
           </div>
         )}
@@ -615,12 +617,12 @@ function UploadModal({ onUpload, onClose }) {
             <div style={{ background:C.surface2, borderRadius:8, height:6, marginBottom:8, overflow:"hidden" }}>
               <div style={{ width:`${progress}%`, height:"100%", background:C.blue, borderRadius:8, transition:"width 0.3s" }} />
             </div>
-            <div style={{ color:C.textMid, fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:12, textAlign:"center" }}>
+            <div style={{ color:C.textMid, fontFamily:"'DM Sans',sans-serif", fontSize:12, textAlign:"center" }}>
               {statusMsg || `${progress}%…`}
             </div>
           </div>
         ) : (
-          <button onClick={upload} disabled={!files.length} style={{ width:"100%", padding:"13px 0", background:files.length ? C.blue : C.surface2, color:files.length ? "#fff" : C.textMute, border:"none", borderRadius:8, cursor:files.length ? "pointer" : "default", fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:14, fontWeight:600, transition:"background 0.2s", boxShadow:files.length ? `0 2px 12px rgba(100,149,237,0.4)` : "none" }}>
+          <button onClick={upload} disabled={!files.length} style={{ width:"100%", padding:"13px 0", background:files.length ? C.blue : C.surface2, color:files.length ? "#fff" : C.textMute, border:"none", borderRadius:8, cursor:files.length ? "pointer" : "default", fontFamily:"'DM Sans',sans-serif", fontSize:14, fontWeight:600, transition:"background 0.2s", boxShadow:files.length ? `0 2px 12px rgba(100,149,237,0.4)` : "none" }}>
             {files.length ? `Ingest ${files.length} Image${files.length !== 1 ? "s" : ""}` : "Select Images to Continue"}
           </button>
         )}
@@ -683,7 +685,7 @@ function renderMarkup(ctx, shapes, scaleX, scaleY) {
     ctx.fillStyle    = "transparent";
     ctx.lineWidth    = Math.max(1, (s.strokeWidth || 2) * scale);
     ctx.textBaseline = "top";
-    ctx.font         = `bold ${Math.round((s.fontSize || 20) * scale)}px "Plus Jakarta Sans", sans-serif`;
+    ctx.font         = `bold ${Math.round((s.fontSize || 20) * scale)}px "DM Sans", sans-serif`;
     const { x, y, x2, y2 } = s;
     if (s.type === "rect") {
       ctx.strokeRect(x, y, x2 - x, y2 - y);
@@ -833,7 +835,7 @@ function MarkupEditor({ photo, onSave, onClose }) {
       <div style={{ background:C.surface, borderBottom:`1px solid ${C.border}`, padding:"10px 20px", display:"flex", alignItems:"center", gap:12, flexShrink:0, flexWrap:"wrap" }}>
 
         {/* Title */}
-        <span style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontWeight:700, fontSize:14, color:C.text, marginRight:4 }}>
+        <span style={{ fontFamily:"'DM Sans',sans-serif", fontWeight:700, fontSize:14, color:C.text, marginRight:4 }}>
           Markup Editor
         </span>
         <span style={{ width:1, height:20, background:C.border2, flexShrink:0 }} />
@@ -842,7 +844,7 @@ function MarkupEditor({ photo, onSave, onClose }) {
         <div style={{ display:"flex", gap:4 }}>
           {TOOLS.map(t => (
             <button key={t.id} onClick={() => setTool(t.id)} title={t.label}
-              style={{ padding:"6px 12px", borderRadius:7, border:`1px solid ${tool===t.id ? C.blue : C.border}`, background:tool===t.id ? C.blueLight : C.surface2, color:tool===t.id ? C.blue : C.textMid, fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:13, fontWeight:600, cursor:"pointer", transition:"all 0.15s" }}>
+              style={{ padding:"6px 12px", borderRadius:7, border:`1px solid ${tool===t.id ? C.blue : C.border}`, background:tool===t.id ? C.blueLight : C.surface2, color:tool===t.id ? C.blue : C.textMid, fontFamily:"'DM Sans',sans-serif", fontSize:13, fontWeight:600, cursor:"pointer", transition:"all 0.15s" }}>
               {t.icon} {t.label}
             </button>
           ))}
@@ -860,10 +862,10 @@ function MarkupEditor({ photo, onSave, onClose }) {
 
         {/* Stroke width */}
         <div style={{ display:"flex", alignItems:"center", gap:6 }}>
-          <span style={{ color:C.textMute, fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:11 }}>Width</span>
+          <span style={{ color:C.textMute, fontFamily:"'DM Sans',sans-serif", fontSize:11 }}>Width</span>
           {[1,2,4,6].map(w => (
             <button key={w} onClick={() => setStroke(w)}
-              style={{ width:28, height:28, borderRadius:6, border:`1px solid ${strokeWidth===w ? C.blue : C.border}`, background:strokeWidth===w ? C.blueLight : C.surface2, color:strokeWidth===w ? C.blue : C.textMid, fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:11, fontWeight:600, cursor:"pointer" }}>
+              style={{ width:28, height:28, borderRadius:6, border:`1px solid ${strokeWidth===w ? C.blue : C.border}`, background:strokeWidth===w ? C.blueLight : C.surface2, color:strokeWidth===w ? C.blue : C.textMid, fontFamily:"'DM Sans',sans-serif", fontSize:11, fontWeight:600, cursor:"pointer" }}>
               {w}
             </button>
           ))}
@@ -874,14 +876,14 @@ function MarkupEditor({ photo, onSave, onClose }) {
         {tool === "text" && (
           <>
             <div style={{ display:"flex", alignItems:"center", gap:6 }}>
-              <span style={{ color:C.textMute, fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:11 }}>Size</span>
+              <span style={{ color:C.textMute, fontFamily:"'DM Sans',sans-serif", fontSize:11 }}>Size</span>
               {[
                 { key:"S", label:"S", style:{ fontSize:11 } },
                 { key:"M", label:"M", style:{ fontSize:13 } },
                 { key:"L", label:"L", style:{ fontSize:16 } },
               ].map(({ key, label, style }) => (
                 <button key={key} onClick={() => setFontSizeKey(key)}
-                  style={{ width:32, height:28, borderRadius:6, border:`1px solid ${fontSizeKey===key ? C.blue : C.border}`, background:fontSizeKey===key ? C.blueLight : C.surface2, color:fontSizeKey===key ? C.blue : C.textMid, fontFamily:"'Plus Jakarta Sans',sans-serif", fontWeight:700, cursor:"pointer", ...style }}>
+                  style={{ width:32, height:28, borderRadius:6, border:`1px solid ${fontSizeKey===key ? C.blue : C.border}`, background:fontSizeKey===key ? C.blueLight : C.surface2, color:fontSizeKey===key ? C.blue : C.textMid, fontFamily:"'DM Sans',sans-serif", fontWeight:700, cursor:"pointer", ...style }}>
                   {label}
                 </button>
               ))}
@@ -892,11 +894,11 @@ function MarkupEditor({ photo, onSave, onClose }) {
 
         {/* Undo / Clear */}
         <button onClick={undo} disabled={shapes.length===0}
-          style={{ padding:"6px 12px", borderRadius:7, border:`1px solid ${C.border}`, background:C.surface2, color:shapes.length===0 ? C.textMute : C.textMid, fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:12, cursor:shapes.length===0?"default":"pointer" }}>
+          style={{ padding:"6px 12px", borderRadius:7, border:`1px solid ${C.border}`, background:C.surface2, color:shapes.length===0 ? C.textMute : C.textMid, fontFamily:"'DM Sans',sans-serif", fontSize:12, cursor:shapes.length===0?"default":"pointer" }}>
           ↩ Undo
         </button>
         <button onClick={clear} disabled={shapes.length===0}
-          style={{ padding:"6px 12px", borderRadius:7, border:`1px solid ${C.border}`, background:C.surface2, color:shapes.length===0 ? C.textMute : C.red, fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:12, cursor:shapes.length===0?"default":"pointer" }}>
+          style={{ padding:"6px 12px", borderRadius:7, border:`1px solid ${C.border}`, background:C.surface2, color:shapes.length===0 ? C.textMute : C.red, fontFamily:"'DM Sans',sans-serif", fontSize:12, cursor:shapes.length===0?"default":"pointer" }}>
           ✕ Clear
         </button>
 
@@ -904,11 +906,11 @@ function MarkupEditor({ photo, onSave, onClose }) {
 
         {/* Cancel / Save */}
         <button onClick={onClose}
-          style={{ padding:"7px 16px", borderRadius:7, border:`1px solid ${C.border}`, background:C.surface2, color:C.textMid, fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:12, cursor:"pointer" }}>
+          style={{ padding:"7px 16px", borderRadius:7, border:`1px solid ${C.border}`, background:C.surface2, color:C.textMid, fontFamily:"'DM Sans',sans-serif", fontSize:12, cursor:"pointer" }}>
           Cancel
         </button>
         <button onClick={save} disabled={saving}
-          style={{ padding:"7px 18px", borderRadius:7, border:"none", background:C.blue, color:"#fff", fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:12, fontWeight:600, cursor:saving?"default":"pointer", boxShadow:`0 2px 8px rgba(100,149,237,0.4)`, display:"flex", alignItems:"center", gap:7, opacity:saving?0.85:1, transition:"opacity 0.2s" }}>
+          style={{ padding:"7px 18px", borderRadius:7, border:"none", background:C.blue, color:"#fff", fontFamily:"'DM Sans',sans-serif", fontSize:12, fontWeight:600, cursor:saving?"default":"pointer", boxShadow:`0 2px 8px rgba(100,149,237,0.4)`, display:"flex", alignItems:"center", gap:7, opacity:saving?0.85:1, transition:"opacity 0.2s" }}>
           {saving ? (
             <><span style={{ width:13, height:13, border:"2px solid rgba(255,255,255,0.35)", borderTopColor:"#fff", borderRadius:"50%", display:"inline-block", animation:"pvSpin 0.7s linear infinite" }} />Saving…</>
           ) : "Save Markup"}
@@ -956,7 +958,7 @@ function MarkupEditor({ photo, onSave, onClose }) {
                   background:"rgba(255,255,255,0.95)",
                   border:`2px solid ${color}`,
                   borderRadius:5, padding:"4px 10px",
-                  fontFamily:"'Plus Jakarta Sans',sans-serif",
+                  fontFamily:"'DM Sans',sans-serif",
                   fontSize:15, color:C.text,
                   outline:"none", minWidth:140, display:"block",
                   boxShadow:"0 4px 16px rgba(0,0,0,0.25)",
@@ -965,11 +967,11 @@ function MarkupEditor({ photo, onSave, onClose }) {
               />
               <div style={{ display:"flex", gap:6, marginTop:4 }}>
                 <button onMouseDown={e => { e.stopPropagation(); commitText(); }}
-                  style={{ flex:1, padding:"4px 0", background:C.blue, color:"#fff", border:"none", borderRadius:4, cursor:"pointer", fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:11, fontWeight:600 }}>
+                  style={{ flex:1, padding:"4px 0", background:C.blue, color:"#fff", border:"none", borderRadius:4, cursor:"pointer", fontFamily:"'DM Sans',sans-serif", fontSize:11, fontWeight:600 }}>
                   ✓ Place
                 </button>
                 <button onMouseDown={e => { e.stopPropagation(); setTextInput({ visible:false, x:0, y:0, value:"" }); }}
-                  style={{ flex:1, padding:"4px 0", background:C.surface2, color:C.textMid, border:`1px solid ${C.border}`, borderRadius:4, cursor:"pointer", fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:11 }}>
+                  style={{ flex:1, padding:"4px 0", background:C.surface2, color:C.textMid, border:`1px solid ${C.border}`, borderRadius:4, cursor:"pointer", fontFamily:"'DM Sans',sans-serif", fontSize:11 }}>
                   Cancel
                 </button>
               </div>
@@ -980,10 +982,10 @@ function MarkupEditor({ photo, onSave, onClose }) {
 
       {/* Status bar */}
       <div style={{ background:C.surface, borderTop:`1px solid ${C.border}`, padding:"6px 20px", display:"flex", alignItems:"center", gap:16 }}>
-        <span style={{ color:C.textMute, fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:11 }}>
+        <span style={{ color:C.textMute, fontFamily:"'DM Sans',sans-serif", fontSize:11 }}>
           {shapes.length} shape{shapes.length!==1?"s":""} · Active tool: <strong style={{ color:C.blue }}>{TOOLS.find(t=>t.id===tool)?.label}</strong> · Color: <span style={{ display:"inline-block", width:10, height:10, borderRadius:"50%", background:color, border:`1px solid ${C.border}`, verticalAlign:"middle", marginLeft:2 }} />
         </span>
-        <span style={{ color:C.textMute, fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:11 }}>
+        <span style={{ color:C.textMute, fontFamily:"'DM Sans',sans-serif", fontSize:11 }}>
           {photo.meta.width && `${photo.meta.width} × ${photo.meta.height} px`}
         </span>
       </div>
@@ -1084,7 +1086,7 @@ function PhotoDetail({ photo, onClose, onUpdate, onDelete }) {
         {/* Meta pane */}
         <div style={{ width:300, background:C.surface, display:"flex", flexDirection:"column", borderLeft:`1px solid ${C.border}` }}>
           <div style={{ padding:"18px 20px 0", display:"flex", justifyContent:"space-between", alignItems:"flex-start" }}>
-            <h3 style={{ margin:0, fontFamily:"'Plus Jakarta Sans',sans-serif", color:C.text, fontSize:15, fontWeight:600, wordBreak:"break-all", lineHeight:1.4 }}>
+            <h3 style={{ margin:0, fontFamily:"'DM Sans',sans-serif", color:C.text, fontSize:15, fontWeight:600, wordBreak:"break-all", lineHeight:1.4 }}>
               {m.originalName || m.name}
             </h3>
             <button onClick={onClose} style={{ background:"none", border:"none", color:C.textMute, cursor:"pointer", fontSize:20, flexShrink:0, marginLeft:8 }}>×</button>
@@ -1095,34 +1097,34 @@ function PhotoDetail({ photo, onClose, onUpdate, onDelete }) {
             <div style={{ background:C.surface2, borderRadius:8, padding:"12px 14px", marginBottom:14 }}>
               {/* Header row */}
               <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
-                <div style={{ color:C.textMute, fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:10, fontWeight:700, letterSpacing:"0.1em", textTransform:"uppercase" }}>Metadata</div>
+                <div style={{ color:C.textMute, fontFamily:"'DM Sans',sans-serif", fontSize:10, fontWeight:700, letterSpacing:"0.1em", textTransform:"uppercase" }}>Metadata</div>
                 {exifEntries.length > 0 && (
                   <button onClick={() => setShowExif(v => !v)}
-                    style={{ display:"flex", alignItems:"center", gap:4, background: showExif ? C.blue : C.surface, border:`1px solid ${showExif ? C.blue : C.border2}`, borderRadius:5, padding:"2px 8px", cursor:"pointer", fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:10, fontWeight:700, color: showExif ? "#fff" : C.textMid, letterSpacing:"0.04em", transition:"all 0.15s" }}>
+                    style={{ display:"flex", alignItems:"center", gap:4, background: showExif ? C.blue : C.surface, border:`1px solid ${showExif ? C.blue : C.border2}`, borderRadius:5, padding:"2px 8px", cursor:"pointer", fontFamily:"'DM Sans',sans-serif", fontSize:10, fontWeight:700, color: showExif ? "#fff" : C.textMid, letterSpacing:"0.04em", transition:"all 0.15s" }}>
                     {showExif ? "▲" : "▼"} EXIF
                   </button>
                 )}
                 {exifEntries.length === 0 && m.type && (
-                  <span style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:10, color:C.textMute, fontStyle:"italic" }}>No EXIF</span>
+                  <span style={{ fontFamily:"'DM Sans',sans-serif", fontSize:10, color:C.textMute, fontStyle:"italic" }}>No EXIF</span>
                 )}
               </div>
 
               {/* Standard fields */}
               {fields.map(([k, v]) => (
                 <div key={k} style={{ display:"flex", justifyContent:"space-between", marginBottom:5, gap:8 }}>
-                  <span style={{ color:C.textMute, fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:11, flexShrink:0 }}>{k}</span>
-                  <span style={{ color:C.textMid, fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:11, textAlign:"right", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", maxWidth:160 }} title={v}>{v}</span>
+                  <span style={{ color:C.textMute, fontFamily:"'DM Sans',sans-serif", fontSize:11, flexShrink:0 }}>{k}</span>
+                  <span style={{ color:C.textMid, fontFamily:"'DM Sans',sans-serif", fontSize:11, textAlign:"right", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", maxWidth:160 }} title={v}>{v}</span>
                 </div>
               ))}
 
               {/* EXIF expanded section */}
               {showExif && exifEntries.length > 0 && (
                 <div style={{ marginTop:10, paddingTop:10, borderTop:`1px solid ${C.border}` }}>
-                  <div style={{ color:C.blue, fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:10, fontWeight:700, letterSpacing:"0.08em", textTransform:"uppercase", marginBottom:8 }}>EXIF Data</div>
+                  <div style={{ color:C.blue, fontFamily:"'DM Sans',sans-serif", fontSize:10, fontWeight:700, letterSpacing:"0.08em", textTransform:"uppercase", marginBottom:8 }}>EXIF Data</div>
                   {exifEntries.map(([k, v]) => (
                     <div key={k} style={{ display:"flex", justifyContent:"space-between", marginBottom:5, gap:8 }}>
-                      <span style={{ color:C.textMute, fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:11, flexShrink:0 }}>{k}</span>
-                      <span style={{ color:C.textMid, fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:11, textAlign:"right", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", maxWidth:155 }} title={v}>{v}</span>
+                      <span style={{ color:C.textMute, fontFamily:"'DM Sans',sans-serif", fontSize:11, flexShrink:0 }}>{k}</span>
+                      <span style={{ color:C.textMid, fontFamily:"'DM Sans',sans-serif", fontSize:11, textAlign:"right", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", maxWidth:155 }} title={v}>{v}</span>
                     </div>
                   ))}
                 </div>
@@ -1131,10 +1133,10 @@ function PhotoDetail({ photo, onClose, onUpdate, onDelete }) {
 
             {/* Program */}
             <div style={{ marginBottom:14 }}>
-              <div style={{ color:C.textMute, fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:10, fontWeight:700, letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:7 }}>Program Name</div>
+              <div style={{ color:C.textMute, fontFamily:"'DM Sans',sans-serif", fontSize:10, fontWeight:700, letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:7 }}>Program Name</div>
               <div style={{ position:"relative" }}>
                 <select value={program} onChange={e => setProgram(e.target.value)}
-                  style={{ width:"100%", appearance:"none", WebkitAppearance:"none", background:C.surface2, border:`1px solid ${C.border}`, borderRadius:8, padding:"8px 30px 8px 10px", color:program ? C.text : C.textMute, fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:12, outline:"none", cursor:"pointer" }}>
+                  style={{ width:"100%", appearance:"none", WebkitAppearance:"none", background:C.surface2, border:`1px solid ${C.border}`, borderRadius:8, padding:"8px 30px 8px 10px", color:program ? C.text : C.textMute, fontFamily:"'DM Sans',sans-serif", fontSize:12, outline:"none", cursor:"pointer" }}>
                   <option value="">— None —</option>
                   {ProgramNames.map(p => <option key={p} value={p}>{p}</option>)}
                 </select>
@@ -1144,7 +1146,7 @@ function PhotoDetail({ photo, onClose, onUpdate, onDelete }) {
 
             {/* Tags */}
             <div style={{ marginBottom:14 }}>
-              <div style={{ color:C.textMute, fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:10, fontWeight:700, letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:7 }}>Tags</div>
+              <div style={{ color:C.textMute, fontFamily:"'DM Sans',sans-serif", fontSize:10, fontWeight:700, letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:7 }}>Tags</div>
               <div style={{ background:C.surface2, border:`1px solid ${C.border}`, borderRadius:8, padding:"8px 10px", minHeight:40 }}>
                 <TagInput tags={tags} onChange={setTags} />
               </div>
@@ -1152,19 +1154,19 @@ function PhotoDetail({ photo, onClose, onUpdate, onDelete }) {
 
             {/* Comment */}
             <div style={{ marginBottom:16 }}>
-              <div style={{ color:C.textMute, fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:10, fontWeight:700, letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:7 }}>Comment</div>
+              <div style={{ color:C.textMute, fontFamily:"'DM Sans',sans-serif", fontSize:10, fontWeight:700, letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:7 }}>Comment</div>
               <textarea value={comment} onChange={e => setComment(e.target.value)} rows={3}
-                style={{ width:"100%", boxSizing:"border-box", background:C.surface2, border:`1px solid ${C.border}`, borderRadius:8, padding:"8px 10px", color:C.text, fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:12, resize:"none", outline:"none" }}
+                style={{ width:"100%", boxSizing:"border-box", background:C.surface2, border:`1px solid ${C.border}`, borderRadius:8, padding:"8px 10px", color:C.text, fontFamily:"'DM Sans',sans-serif", fontSize:12, resize:"none", outline:"none" }}
               />
             </div>
 
             <div style={{ display:"flex", gap:8, marginBottom:8 }}>
               <button onClick={() => setShowMarkup(true)}
-                style={{ flex:1, padding:"9px 0", background:markup.length > 0 ? "#f0f7ff" : C.surface2, color:markup.length > 0 ? C.blue : C.textMid, border:`1px solid ${markup.length > 0 ? C.blueMid : C.border}`, borderRadius:7, cursor:"pointer", fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:12, fontWeight:600, display:"flex", alignItems:"center", justifyContent:"center", gap:5 }}>
+                style={{ flex:1, padding:"9px 0", background:markup.length > 0 ? "#f0f7ff" : C.surface2, color:markup.length > 0 ? C.blue : C.textMid, border:`1px solid ${markup.length > 0 ? C.blueMid : C.border}`, borderRadius:7, cursor:"pointer", fontFamily:"'DM Sans',sans-serif", fontSize:12, fontWeight:600, display:"flex", alignItems:"center", justifyContent:"center", gap:5 }}>
                 ✏ {markup.length > 0 ? `Edit Markup (${markup.length})` : "Add Markup"}
               </button>
               <button onClick={() => { setShowDownload(d => !d); setConfirmDelete(false); }}
-                style={{ padding:"9px 12px", background: showDownload ? C.blueLight : C.surface2, color: showDownload ? C.blue : C.textMid, border:`1px solid ${showDownload ? C.blueMid : C.border}`, borderRadius:7, cursor:"pointer", fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:12, fontWeight:600, display:"flex", alignItems:"center", gap:5, transition:"all 0.15s" }}>
+                style={{ padding:"9px 12px", background: showDownload ? C.blueLight : C.surface2, color: showDownload ? C.blue : C.textMid, border:`1px solid ${showDownload ? C.blueMid : C.border}`, borderRadius:7, cursor:"pointer", fontFamily:"'DM Sans',sans-serif", fontSize:12, fontWeight:600, display:"flex", alignItems:"center", gap:5, transition:"all 0.15s" }}>
                 ↓ Download
               </button>
             </div>
@@ -1172,19 +1174,19 @@ function PhotoDetail({ photo, onClose, onUpdate, onDelete }) {
             {/* Download prompt */}
             {showDownload && (
               <div style={{ background:C.blueLight, border:`1px solid ${C.blueMid}`, borderRadius:8, padding:"10px 12px", marginBottom:8 }}>
-                <div style={{ color:C.blue, fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:11, fontWeight:700, marginBottom:8, letterSpacing:"0.04em", textTransform:"uppercase" }}>
+                <div style={{ color:C.blue, fontFamily:"'DM Sans',sans-serif", fontSize:11, fontWeight:700, marginBottom:8, letterSpacing:"0.04em", textTransform:"uppercase" }}>
                   Download as…
                 </div>
                 <div style={{ display:"flex", gap:8 }}>
                   <button onClick={downloadOriginal}
-                    style={{ flex:1, padding:"8px 0", background:C.surface, color:C.text, border:`1px solid ${C.border}`, borderRadius:7, cursor:"pointer", fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:12, fontWeight:600, display:"flex", flexDirection:"column", alignItems:"center", gap:2 }}>
+                    style={{ flex:1, padding:"8px 0", background:C.surface, color:C.text, border:`1px solid ${C.border}`, borderRadius:7, cursor:"pointer", fontFamily:"'DM Sans',sans-serif", fontSize:12, fontWeight:600, display:"flex", flexDirection:"column", alignItems:"center", gap:2 }}>
                     <span style={{ fontSize:16 }}>🖼</span>
                     <span>Original</span>
                     <span style={{ fontSize:10, color:C.textMute, fontWeight:400 }}>unmodified file</span>
                   </button>
                   <button onClick={downloadWithMarkup}
                     disabled={markup.length === 0}
-                    style={{ flex:1, padding:"8px 0", background: markup.length > 0 ? C.surface : C.surface2, color: markup.length > 0 ? C.text : C.textMute, border:`1px solid ${markup.length > 0 ? C.border : C.border}`, borderRadius:7, cursor: markup.length > 0 ? "pointer" : "default", fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:12, fontWeight:600, display:"flex", flexDirection:"column", alignItems:"center", gap:2 }}>
+                    style={{ flex:1, padding:"8px 0", background: markup.length > 0 ? C.surface : C.surface2, color: markup.length > 0 ? C.text : C.textMute, border:`1px solid ${markup.length > 0 ? C.border : C.border}`, borderRadius:7, cursor: markup.length > 0 ? "pointer" : "default", fontFamily:"'DM Sans',sans-serif", fontSize:12, fontWeight:600, display:"flex", flexDirection:"column", alignItems:"center", gap:2 }}>
                     <span style={{ fontSize:16 }}>✏</span>
                     <span>With Markup</span>
                     <span style={{ fontSize:10, color: markup.length > 0 ? C.textMute : C.textMute, fontWeight:400 }}>
@@ -1198,16 +1200,16 @@ function PhotoDetail({ photo, onClose, onUpdate, onDelete }) {
             {confirmDelete ? (
               /* Confirmation state */
               <div style={{ background:"#fff5f5", border:`1px solid #f0c8c8`, borderRadius:8, padding:"10px 12px" }}>
-                <div style={{ color:C.red, fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:12, fontWeight:600, marginBottom:8, textAlign:"center" }}>
+                <div style={{ color:C.red, fontFamily:"'DM Sans',sans-serif", fontSize:12, fontWeight:600, marginBottom:8, textAlign:"center" }}>
                   Delete this image permanently?
                 </div>
                 <div style={{ display:"flex", gap:8 }}>
                   <button onClick={() => { onDelete(photo.id); onClose(); }}
-                    style={{ flex:1, padding:"8px 0", background:C.red, color:"#fff", border:"none", borderRadius:7, cursor:"pointer", fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:12, fontWeight:700 }}>
+                    style={{ flex:1, padding:"8px 0", background:C.red, color:"#fff", border:"none", borderRadius:7, cursor:"pointer", fontFamily:"'DM Sans',sans-serif", fontSize:12, fontWeight:700 }}>
                     Yes, delete
                   </button>
                   <button onClick={() => setConfirmDelete(false)}
-                    style={{ flex:1, padding:"8px 0", background:C.surface2, color:C.textMid, border:`1px solid ${C.border}`, borderRadius:7, cursor:"pointer", fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:12, fontWeight:500 }}>
+                    style={{ flex:1, padding:"8px 0", background:C.surface2, color:C.textMid, border:`1px solid ${C.border}`, borderRadius:7, cursor:"pointer", fontFamily:"'DM Sans',sans-serif", fontSize:12, fontWeight:500 }}>
                     Cancel
                   </button>
                 </div>
@@ -1215,13 +1217,13 @@ function PhotoDetail({ photo, onClose, onUpdate, onDelete }) {
             ) : (
               <div style={{ display:"flex", gap:8 }}>
                 <button onClick={save} disabled={saving || saved}
-                  style={{ flex:1, padding:"9px 0", background:saved ? C.green : C.blue, color:"#fff", border:"none", borderRadius:7, cursor:saving||saved?"default":"pointer", fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:12, fontWeight:600, transition:"background 0.3s", display:"flex", alignItems:"center", justifyContent:"center", gap:7 }}>
+                  style={{ flex:1, padding:"9px 0", background:saved ? C.green : C.blue, color:"#fff", border:"none", borderRadius:7, cursor:saving||saved?"default":"pointer", fontFamily:"'DM Sans',sans-serif", fontSize:12, fontWeight:600, transition:"background 0.3s", display:"flex", alignItems:"center", justifyContent:"center", gap:7 }}>
                   {saving ? (
                     <><span style={{ width:13, height:13, border:"2px solid rgba(255,255,255,0.35)", borderTopColor:"#fff", borderRadius:"50%", display:"inline-block", animation:"pvSpin 0.7s linear infinite" }} />Saving…</>
                   ) : saved ? "✓ Saved" : "Save Changes"}
                 </button>
                 <button onClick={() => setConfirmDelete(true)}
-                  style={{ padding:"9px 12px", background:"#fff", color:C.red, border:`1px solid #f0c8c8`, borderRadius:7, cursor:"pointer", fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:12, fontWeight:500 }}>
+                  style={{ padding:"9px 12px", background:"#fff", color:C.red, border:`1px solid #f0c8c8`, borderRadius:7, cursor:"pointer", fontFamily:"'DM Sans',sans-serif", fontSize:12, fontWeight:500 }}>
                   Delete
                 </button>
               </div>
@@ -1330,7 +1332,7 @@ function PhotoList({ photos, onSelect }) {
                 padding: "9px 10px",
                 display: "flex", alignItems: "center", gap: 4,
                 color: isActive ? C.blue : C.textMute,
-                fontFamily: "'Plus Jakarta Sans',sans-serif",
+                fontFamily: "'DM Sans',sans-serif",
                 fontSize: 10, fontWeight: 700,
                 letterSpacing: "0.08em", textTransform: "uppercase",
                 cursor: canSort ? "pointer" : "default",
@@ -1351,22 +1353,31 @@ function PhotoList({ photos, onSelect }) {
 
       {/* Data rows */}
       {sorted.map((p, i) => (
-        <PhotoListRow key={p.id} photo={p} cols={cols} even={i%2===0} onSelect={onSelect} />
+        <PhotoListRow key={p.id} photo={p} cols={cols} even={i%2===0}
+          onSelect={onSelect}
+          isSelected={selectedIds.has(p.id)}
+          onToggleSelect={onToggleSelect}
+        />
       ))}
     </div>
   );
 }
 
-function PhotoListRow({ photo, cols, even, onSelect }) {
+function PhotoListRow({ photo, cols, even, onSelect, isSelected, onToggleSelect }) {
   const [hover, setHover] = useState(false);
   return (
-    <div onClick={() => onSelect(photo.id)}
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
-      style={{ display:"flex", alignItems:"center", padding:"6px 8px", cursor:"pointer", borderBottom:`1px solid ${C.border}`, background: hover ? C.blueLight : even ? C.surface : "#fafbfc", transition:"background 0.12s" }}>
+    <div onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
+      style={{ display:"flex", alignItems:"center", padding:"6px 8px", cursor:"pointer", borderBottom:`1px solid ${C.border}`, background: isSelected ? C.blueLight : hover ? "#f0f5ff" : even ? C.surface : "#fafbfc", transition:"background 0.12s", outline: isSelected ? `2px solid ${C.blue}` : "none", outlineOffset:"-2px" }}>
+      {/* Row checkbox */}
+      <div onClick={e => { e.stopPropagation(); onToggleSelect(photo.id); }}
+        style={{ flexShrink:0, width:32, display:"flex", alignItems:"center", justifyContent:"center" }}>
+        <div style={{ width:18, height:18, borderRadius:5, background: isSelected ? C.blue : "transparent", border:`2px solid ${isSelected ? C.blue : C.border2}`, display:"flex", alignItems:"center", justifyContent:"center", transition:"all 0.15s" }}>
+          {isSelected && <span style={{ color:"#fff", fontSize:11, lineHeight:1, fontWeight:700 }}>✓</span>}
+        </div>
+      </div>
       {cols.map(col => (
-        <div key={col.label}
-          style={{ flex:col.flex || `0 0 ${col.w}px`, padding:"4px 10px", overflow:"hidden", fontFamily:"'Plus Jakarta Sans',sans-serif", minWidth:0 }}>
+        <div key={col.label} onClick={() => onSelect(photo.id)}
+          style={{ flex:col.flex || `0 0 ${col.w}px`, padding:"4px 10px", overflow:"hidden", fontFamily:"'DM Sans',sans-serif", minWidth:0 }}>
           {col.render(photo)}
         </div>
       ))}
@@ -1374,45 +1385,161 @@ function PhotoListRow({ photo, cols, even, onSelect }) {
   );
 }
 
-// ── Photo Card ─────────────────────────────────────────────────────────────────
-function PhotoCard({ photo, onClick }) {
-  const [hover, setHover] = useState(false);
+// ── Bulk Action Bar ────────────────────────────────────────────────────────────
+function BulkActionBar({ count, total, onSelectAll, onClear, onApply }) {
+  const [addTag, setAddTag]     = useState("");
+  const [program, setProgram]   = useState("");
+  const [tagInput, setTagInput] = useState("");
+
+  const addTagToList = () => {
+    const t = tagInput.trim().toLowerCase().replace(/\s+/g, "-");
+    if (t && !addTag.split(",").filter(Boolean).includes(t)) {
+      setAddTag(prev => prev ? prev + "," + t : t);
+    }
+    setTagInput("");
+  };
+
+  const tagList = addTag.split(",").filter(Boolean);
+
+  const apply = () => {
+    if (!addTag && !program) return;
+    onApply({
+      addTags: tagList,
+      program: program || undefined,
+    });
+    setAddTag(""); setProgram(""); setTagInput("");
+  };
+
   return (
-    <div onClick={onClick} onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
-      style={{ background:C.surface, borderRadius:10, border:`1px solid ${hover ? C.blueMid : C.border}`, overflow:"hidden", cursor:"pointer", transition:"all 0.18s", transform:hover ? "translateY(-3px)" : "none", boxShadow:hover ? `0 10px 30px rgba(100,149,237,0.18)` : `0 1px 4px rgba(28,40,80,0.06)` }}>
+    <div style={{
+      background: C.surface, border: `1px solid ${C.blue}`,
+      borderRadius: 10, padding: "12px 16px", marginBottom: 16,
+      boxShadow: `0 4px 20px rgba(100,149,237,0.15)`,
+      display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap",
+    }}>
+      {/* Count + select controls */}
+      <div style={{ display:"flex", alignItems:"center", gap:8, flexShrink:0 }}>
+        <div style={{ background:C.blue, color:"#fff", borderRadius:6, padding:"3px 10px", fontFamily:"'DM Sans',sans-serif", fontSize:12, fontWeight:700 }}>
+          {count} selected
+        </div>
+        {count < total && (
+          <button onClick={onSelectAll}
+            style={{ background:"none", border:`1px solid ${C.border}`, borderRadius:6, padding:"3px 10px", fontFamily:"'DM Sans',sans-serif", fontSize:12, color:C.textMid, cursor:"pointer" }}>
+            Select all {total}
+          </button>
+        )}
+        <button onClick={onClear}
+          style={{ background:"none", border:"none", fontFamily:"'DM Sans',sans-serif", fontSize:12, color:C.textMute, cursor:"pointer", textDecoration:"underline" }}>
+          Deselect all
+        </button>
+      </div>
+
+      <div style={{ width:1, height:24, background:C.border2, flexShrink:0 }} />
+
+      {/* Add tags */}
+      <div style={{ display:"flex", alignItems:"center", gap:6, flexWrap:"wrap" }}>
+        <span style={{ color:C.textMute, fontFamily:"'DM Sans',sans-serif", fontSize:11, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em" }}>Add tags</span>
+        <div style={{ display:"flex", flexWrap:"wrap", gap:4, alignItems:"center" }}>
+          {tagList.map(t => {
+            const s = tagStyle(t);
+            return (
+              <span key={t} style={{ background:s.bg, color:s.text, border:`1px solid ${s.border}`, borderRadius:20, padding:"1px 8px", fontSize:11, fontFamily:"'DM Sans',sans-serif", fontWeight:500, display:"inline-flex", alignItems:"center", gap:3 }}>
+                {t}
+                <button onClick={() => setAddTag(tagList.filter(x=>x!==t).join(","))}
+                  style={{ background:"none", border:"none", color:s.text, cursor:"pointer", padding:0, fontSize:13, lineHeight:1, opacity:0.6 }}>×</button>
+              </span>
+            );
+          })}
+          <input value={tagInput} onChange={e=>setTagInput(e.target.value)}
+            onKeyDown={e=>{ if(e.key==="Enter"||e.key===","){e.preventDefault();addTagToList();} }}
+            placeholder="tag…"
+            style={{ background:C.surface2, border:`1px solid ${C.border}`, borderRadius:6, padding:"4px 8px", fontFamily:"'DM Sans',sans-serif", fontSize:12, color:C.text, outline:"none", width:80 }}
+          />
+        </div>
+      </div>
+
+      <div style={{ width:1, height:24, background:C.border2, flexShrink:0 }} />
+
+      {/* Assign program */}
+      <div style={{ display:"flex", alignItems:"center", gap:6, flexShrink:0 }}>
+        <span style={{ color:C.textMute, fontFamily:"'DM Sans',sans-serif", fontSize:11, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em" }}>Program</span>
+        <div style={{ position:"relative" }}>
+          <select value={program} onChange={e=>setProgram(e.target.value)}
+            style={{ appearance:"none", WebkitAppearance:"none", background:C.surface2, border:`1px solid ${C.border}`, borderRadius:6, padding:"5px 24px 5px 8px", fontFamily:"'DM Sans',sans-serif", fontSize:12, color:program?C.text:C.textMute, outline:"none", cursor:"pointer" }}>
+            <option value="">— assign —</option>
+            {ProgramNames.map(p=><option key={p} value={p}>{p}</option>)}
+          </select>
+          <span style={{ position:"absolute", right:6, top:"50%", transform:"translateY(-50%)", color:C.textMute, fontSize:10, pointerEvents:"none" }}>▾</span>
+        </div>
+      </div>
+
+      <div style={{ flex:1 }} />
+
+      {/* Apply button */}
+      <button onClick={apply} disabled={!addTag && !program}
+        style={{ background: (addTag||program) ? C.blue : C.surface2, color: (addTag||program) ? "#fff" : C.textMute, border:"none", borderRadius:7, padding:"7px 18px", fontFamily:"'DM Sans',sans-serif", fontSize:12, fontWeight:600, cursor:(addTag||program)?"pointer":"default", transition:"all 0.2s", boxShadow:(addTag||program)?`0 2px 8px rgba(100,149,237,0.3)`:"none", flexShrink:0 }}>
+        Apply to {count} image{count!==1?"s":""}
+      </button>
+    </div>
+  );
+}
+
+// ── Photo Card ─────────────────────────────────────────────────────────────────
+function PhotoCard({ photo, onClick, isSelected, onToggleSelect, anySelected }) {
+  const [hover, setHover] = useState(false);
+  const showCheck = hover || isSelected || anySelected;
+  return (
+    <div onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
+      style={{ background:C.surface, borderRadius:10, border:`1px solid ${isSelected ? C.blue : hover ? C.blueMid : C.border}`, overflow:"hidden", cursor:"pointer", transition:"all 0.18s", transform:hover && !isSelected ? "translateY(-3px)" : "none", boxShadow: isSelected ? `0 0 0 2px ${C.blue}` : hover ? `0 10px 30px rgba(100,149,237,0.18)` : `0 1px 4px rgba(28,40,80,0.06)` }}>
       <div style={{ position:"relative", paddingTop:"66%", background:C.surface2 }}>
-        <img src={photo.dataUrl} alt={photo.meta.originalName || photo.meta.name} style={{ position:"absolute", inset:0, width:"100%", height:"100%", objectFit:"cover" }} />
-        {hover && (
-          <div style={{ position:"absolute", inset:0, background:"rgba(100,149,237,0.14)", display:"flex", alignItems:"center", justifyContent:"center" }}>
-            <span style={{ background:C.blue, color:"#fff", borderRadius:6, padding:"5px 16px", fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:12, fontWeight:600 }}>View</span>
+        <img src={photo.dataUrl} alt={photo.meta.originalName || photo.meta.name}
+          onClick={onClick}
+          style={{ position:"absolute", inset:0, width:"100%", height:"100%", objectFit:"cover", cursor:"pointer" }} />
+
+        {/* Checkbox */}
+        {showCheck && (
+          <div onClick={e => { e.stopPropagation(); onToggleSelect(photo.id); }}
+            style={{ position:"absolute", top:8, left:8, width:22, height:22, borderRadius:6, background: isSelected ? C.blue : "rgba(255,255,255,0.9)", border:`2px solid ${isSelected ? C.blue : C.border2}`, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", transition:"all 0.15s", zIndex:2 }}>
+            {isSelected && <span style={{ color:"#fff", fontSize:13, lineHeight:1, fontWeight:700 }}>✓</span>}
+          </div>
+        )}
+
+        {/* Selected overlay */}
+        {isSelected && (
+          <div style={{ position:"absolute", inset:0, background:"rgba(100,149,237,0.18)", pointerEvents:"none" }} />
+        )}
+
+        {!isSelected && hover && (
+          <div onClick={onClick} style={{ position:"absolute", inset:0, background:"rgba(100,149,237,0.14)", display:"flex", alignItems:"center", justifyContent:"center" }}>
+            <span style={{ background:C.blue, color:"#fff", borderRadius:6, padding:"5px 16px", fontFamily:"'DM Sans',sans-serif", fontSize:12, fontWeight:600 }}>View</span>
           </div>
         )}
         {photo.meta.width && (
           <div style={{ position:"absolute", top:6, right:6, background:"rgba(255,255,255,0.9)", borderRadius:4, padding:"2px 7px" }}>
-            <span style={{ color:C.textMid, fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:10 }}>{photo.meta.width}×{photo.meta.height}</span>
+            <span style={{ color:C.textMid, fontFamily:"'DM Sans',sans-serif", fontSize:10 }}>{photo.meta.width}×{photo.meta.height}</span>
           </div>
         )}
         {photo.meta.markup?.length > 0 && (
           <div style={{ position:"absolute", top:6, left:6, background:"rgba(100,149,237,0.9)", borderRadius:4, padding:"2px 7px" }}>
-            <span style={{ color:"#fff", fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:10, fontWeight:600 }}>✏ {photo.meta.markup.length}</span>
+            <span style={{ color:"#fff", fontFamily:"'DM Sans',sans-serif", fontSize:10, fontWeight:600 }}>✏ {photo.meta.markup.length}</span>
           </div>
         )}
       </div>
       <div style={{ padding:"10px 12px" }}>
-        <div style={{ color:C.textMid, fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:12, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", marginBottom:photo.program ? 3 : 6 }}>
+        <div style={{ color:C.textMid, fontFamily:"'DM Sans',sans-serif", fontSize:12, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", marginBottom:photo.program ? 3 : 6 }}>
           {photo.meta.originalName || photo.meta.name}
         </div>
         {photo.program && (
-          <div style={{ display:"inline-flex", alignItems:"center", background:C.blueLight, color:C.blue, borderRadius:5, padding:"1px 8px", fontSize:11, fontFamily:"'Plus Jakarta Sans',sans-serif", fontWeight:600, marginBottom:6 }}>
+          <div style={{ display:"inline-flex", alignItems:"center", background:C.blueLight, color:C.blue, borderRadius:5, padding:"1px 8px", fontSize:11, fontFamily:"'DM Sans',sans-serif", fontWeight:600, marginBottom:6 }}>
             {photo.program}
           </div>
         )}
         <div style={{ display:"flex", flexWrap:"wrap", gap:4, marginBottom:photo.comment ? 5 : 0 }}>
           {photo.tags.slice(0, 4).map(t => <TagPill key={t} tag={t} small />)}
-          {photo.tags.length > 4 && <span style={{ color:C.textMute, fontSize:10, fontFamily:"'Plus Jakarta Sans',sans-serif", alignSelf:"center" }}>+{photo.tags.length - 4}</span>}
+          {photo.tags.length > 4 && <span style={{ color:C.textMute, fontSize:10, fontFamily:"'DM Sans',sans-serif", alignSelf:"center" }}>+{photo.tags.length - 4}</span>}
         </div>
         {photo.comment && (
-          <div style={{ color:C.textMute, fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:11, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{photo.comment}</div>
+          <div style={{ color:C.textMute, fontFamily:"'DM Sans',sans-serif", fontSize:11, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{photo.comment}</div>
         )}
       </div>
     </div>
@@ -1428,7 +1555,8 @@ export default function PhotoVault() {
   const [query, setQuery]           = useState("");
   const [sortBy, setSortBy]         = useState("date");
   const [filterTag, setFilterTag]   = useState(null);
-  const [viewMode, setViewMode]     = useState("gallery"); // "gallery" | "list" 
+  const [viewMode, setViewMode]     = useState("gallery"); // "gallery" | "list"
+  const [selectedIds, setSelectedIds] = useState(new Set());
 
   useEffect(() => { loadAllPhotos().then(p => { setPhotos(p); setLoading(false); }); }, []);
 
@@ -1452,6 +1580,41 @@ export default function PhotoVault() {
     : b.meta.size - a.meta.size
   );
 
+  // ── Selection helpers ───────────────────────────────────────────────────────
+  const toggleSelect = (id) => setSelectedIds(prev => {
+    const next = new Set(prev);
+    next.has(id) ? next.delete(id) : next.add(id);
+    return next;
+  });
+  const selectAll  = () => setSelectedIds(new Set(sorted.map(p => p.id)));
+  const clearSelection = () => setSelectedIds(new Set());
+
+  // Escape key clears selection
+  useEffect(() => {
+    const handler = e => { if (e.key === "Escape") clearSelection(); };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
+
+  // ── Bulk update ──────────────────────────────────────────────────────────────
+  const bulkApply = async ({ tags, addTags, program }) => {
+    for (const id of selectedIds) {
+      const photo = photos.find(p => p.id === id);
+      if (!photo) continue;
+      const updates = {};
+      if (program !== undefined) updates.program = program;
+      if (addTags && addTags.length) {
+        const merged = [...new Set([...photo.tags, ...addTags])];
+        updates.tags = merged;
+      } else if (tags !== undefined) {
+        updates.tags = tags;
+      }
+      await updatePhoto(id, updates);
+      setPhotos(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p));
+    }
+    clearSelection();
+  };
+
   const onUpload = newPhotos => { setPhotos(p => [...newPhotos, ...p]); setShowUpload(false); };
   const onUpdate = (id, updates) => setPhotos(p => p.map(x => x.id === id ? { ...x, ...updates } : x));
   const onDelete = async id => { await deletePhoto(id); setPhotos(p => p.filter(x => x.id !== id)); };
@@ -1460,12 +1623,12 @@ export default function PhotoVault() {
   return (
     <div style={{ minHeight:"100vh", background:C.bg, color:C.text }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap');
         * { box-sizing:border-box; margin:0; padding:0; }
         body { background:${C.bg}; }
         ::-webkit-scrollbar { width:5px; background:${C.bg}; }
         ::-webkit-scrollbar-thumb { background:${C.border2}; border-radius:4px; }
-        input,textarea,select { font-family:'Plus Jakarta Sans',sans-serif !important; }
+        input,textarea,select { font-family:'DM Sans',sans-serif !important; }
         textarea:focus, input:focus { border-color:${C.blue} !important; box-shadow:0 0 0 3px ${C.blueLight} !important; outline:none !important; }
         @keyframes pvSpin { to { transform: rotate(360deg); } }
       `}</style>
@@ -1477,10 +1640,10 @@ export default function PhotoVault() {
             <div style={{ width:32, height:32, borderRadius:8, background:C.blue, display:"flex", alignItems:"center", justifyContent:"center", boxShadow:`0 2px 8px rgba(100,149,237,0.4)` }}>
               <span style={{ color:"#fff", fontSize:17, lineHeight:1 }}>◫</span>
             </div>
-            <span style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:20, fontWeight:800, color:C.text, letterSpacing:"-0.02em" }}>PhotoVault</span>
+            <span style={{ fontFamily:"'DM Sans',sans-serif", fontSize:20, fontWeight:700, color:C.text, letterSpacing:"-0.01em" }}>PhotoVault</span>
           </div>
           <span style={{ width:1, height:18, background:C.border2, display:"inline-block" }} />
-          <span style={{ color:C.textMute, fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:13 }}>
+          <span style={{ color:C.textMute, fontFamily:"'DM Sans',sans-serif", fontSize:13 }}>
             {photos.length} image{photos.length !== 1 ? "s" : ""} stored
           </span>
         </div>
@@ -1509,7 +1672,7 @@ export default function PhotoVault() {
             ))}
           </div>
 
-          <button onClick={() => setShowUpload(true)} style={{ background:C.blue, color:"#fff", border:"none", borderRadius:8, padding:"9px 20px", fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:13, fontWeight:600, cursor:"pointer", boxShadow:`0 2px 8px rgba(100,149,237,0.4)`, letterSpacing:"0.01em" }}>
+          <button onClick={() => setShowUpload(true)} style={{ background:C.blue, color:"#fff", border:"none", borderRadius:8, padding:"9px 20px", fontFamily:"'DM Sans',sans-serif", fontSize:13, fontWeight:600, cursor:"pointer", boxShadow:`0 2px 8px rgba(100,149,237,0.4)`, letterSpacing:"0.01em" }}>
             + Ingest
           </button>
         </div>
@@ -1518,9 +1681,9 @@ export default function PhotoVault() {
       <div style={{ display:"flex" }}>
         {/* Sidebar */}
         <aside style={{ width:210, borderRight:`1px solid ${C.border}`, padding:"18px 12px", flexShrink:0, position:"sticky", top:57, alignSelf:"flex-start", height:"calc(100vh - 57px)", overflowY:"auto", background:C.surface }}>
-          <div style={{ color:C.textMute, fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:10, fontWeight:700, letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:10, paddingLeft:8 }}>Browse by Tag</div>
+          <div style={{ color:C.textMute, fontFamily:"'DM Sans',sans-serif", fontSize:10, fontWeight:700, letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:10, paddingLeft:8 }}>Browse by Tag</div>
 
-          <button onClick={() => { setFilterTag(null); setQuery(""); }} style={{ display:"block", width:"100%", textAlign:"left", background:!filterTag&&!query ? C.blueLight : "transparent", border:"none", borderRadius:7, padding:"7px 10px", color:!filterTag&&!query ? C.blue : C.textMid, fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:13, fontWeight:!filterTag&&!query ? 600 : 400, cursor:"pointer", marginBottom:2 }}>
+          <button onClick={() => { setFilterTag(null); setQuery(""); }} style={{ display:"block", width:"100%", textAlign:"left", background:!filterTag&&!query ? C.blueLight : "transparent", border:"none", borderRadius:7, padding:"7px 10px", color:!filterTag&&!query ? C.blue : C.textMid, fontFamily:"'DM Sans',sans-serif", fontSize:13, fontWeight:!filterTag&&!query ? 600 : 400, cursor:"pointer", marginBottom:2 }}>
             All images
             <span style={{ float:"right", color:C.textMute, fontSize:11, fontWeight:400 }}>{photos.length}</span>
           </button>
@@ -1529,7 +1692,7 @@ export default function PhotoVault() {
             const count = photos.filter(p => p.tags.includes(t)).length;
             const s = tagStyle(t); const active = filterTag === t;
             return (
-              <button key={t} onClick={() => { setFilterTag(t); setQuery(""); }} style={{ display:"block", width:"100%", textAlign:"left", background:active ? s.bg : "transparent", border:"none", borderRadius:7, padding:"6px 10px", color:active ? s.text : C.textMid, fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:13, fontWeight:active ? 600 : 400, cursor:"pointer", marginBottom:1, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+              <button key={t} onClick={() => { setFilterTag(t); setQuery(""); }} style={{ display:"block", width:"100%", textAlign:"left", background:active ? s.bg : "transparent", border:"none", borderRadius:7, padding:"6px 10px", color:active ? s.text : C.textMid, fontFamily:"'DM Sans',sans-serif", fontSize:13, fontWeight:active ? 600 : 400, cursor:"pointer", marginBottom:1, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
                 <span style={{ marginRight:6, color:s.text, fontSize:8 }}>●</span>{t}
                 <span style={{ float:"right", color:C.textMute, fontSize:11, fontWeight:400 }}>{count}</span>
               </button>
@@ -1537,14 +1700,14 @@ export default function PhotoVault() {
           })}
 
           {allTags.length === 0 && (
-            <div style={{ color:C.textMute, fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:12, paddingLeft:8, marginTop:6 }}>No tags yet</div>
+            <div style={{ color:C.textMute, fontFamily:"'DM Sans',sans-serif", fontSize:12, paddingLeft:8, marginTop:6 }}>No tags yet</div>
           )}
         </aside>
 
         {/* Grid */}
         <main style={{ flex:1, padding:24 }}>
           {loading ? (
-            <div style={{ textAlign:"center", paddingTop:80, color:C.textMute, fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:14 }}>Loading vault…</div>
+            <div style={{ textAlign:"center", paddingTop:80, color:C.textMute, fontFamily:"'DM Sans',sans-serif", fontSize:14 }}>Loading vault…</div>
           ) : sorted.length === 0 ? (
             <div style={{ textAlign:"center", paddingTop:80 }}>
               {photos.length === 0 ? (
@@ -1552,20 +1715,20 @@ export default function PhotoVault() {
                   <div style={{ width:72, height:72, borderRadius:16, background:C.blueLight, margin:"0 auto 20px", display:"flex", alignItems:"center", justifyContent:"center" }}>
                     <span style={{ fontSize:30, color:C.blue }}>◫</span>
                   </div>
-                  <div style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", color:C.text, fontSize:22, fontWeight:700, marginBottom:8 }}>Your vault is empty</div>
-                  <div style={{ color:C.textMute, fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:14, marginBottom:24, maxWidth:360, margin:"0 auto 24px" }}>
+                  <div style={{ fontFamily:"'DM Sans',sans-serif", color:C.text, fontSize:22, fontWeight:700, marginBottom:8 }}>Your vault is empty</div>
+                  <div style={{ color:C.textMute, fontFamily:"'DM Sans',sans-serif", fontSize:14, marginBottom:24, maxWidth:360, margin:"0 auto 24px" }}>
                     Ingest images to build a queryable archive — browse by tag, program, or keyword.
                   </div>
-                  <button onClick={() => setShowUpload(true)} style={{ background:C.blue, color:"#fff", border:"none", borderRadius:8, padding:"11px 26px", fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:14, fontWeight:600, cursor:"pointer", boxShadow:`0 4px 16px rgba(100,149,237,0.4)` }}>
+                  <button onClick={() => setShowUpload(true)} style={{ background:C.blue, color:"#fff", border:"none", borderRadius:8, padding:"11px 26px", fontFamily:"'DM Sans',sans-serif", fontSize:14, fontWeight:600, cursor:"pointer", boxShadow:`0 4px 16px rgba(100,149,237,0.4)` }}>
                     + Ingest First Images
                   </button>
                 </>
               ) : (
                 <div>
-                  <div style={{ color:C.textMid, fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:14, marginBottom:12 }}>
+                  <div style={{ color:C.textMid, fontFamily:"'DM Sans',sans-serif", fontSize:14, marginBottom:12 }}>
                     No results for <strong style={{ color:C.blue }}>{query || filterTag}</strong>
                   </div>
-                  <button onClick={() => { setQuery(""); setFilterTag(null); }} style={{ background:C.surface, border:`1px solid ${C.border}`, borderRadius:7, padding:"7px 16px", color:C.textMid, fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:12, cursor:"pointer" }}>
+                  <button onClick={() => { setQuery(""); setFilterTag(null); }} style={{ background:C.surface, border:`1px solid ${C.border}`, borderRadius:7, padding:"7px 16px", color:C.textMid, fontFamily:"'DM Sans',sans-serif", fontSize:12, cursor:"pointer" }}>
                     Clear filter
                   </button>
                 </div>
@@ -1575,17 +1738,40 @@ export default function PhotoVault() {
             <>
               {(query || filterTag) && (
                 <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:16 }}>
-                  <span style={{ color:C.textMid, fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:13 }}>{sorted.length} result{sorted.length !== 1 ? "s" : ""} for</span>
-                  <span style={{ background:C.blueLight, color:C.blue, borderRadius:6, padding:"2px 10px", fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:12, fontWeight:600 }}>{filterTag || query}</span>
-                  <button onClick={() => { setQuery(""); setFilterTag(null); }} style={{ background:"none", border:"none", color:C.textMute, cursor:"pointer", fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:12, textDecoration:"underline" }}>clear</button>
+                  <span style={{ color:C.textMid, fontFamily:"'DM Sans',sans-serif", fontSize:13 }}>{sorted.length} result{sorted.length !== 1 ? "s" : ""} for</span>
+                  <span style={{ background:C.blueLight, color:C.blue, borderRadius:6, padding:"2px 10px", fontFamily:"'DM Sans',sans-serif", fontSize:12, fontWeight:600 }}>{filterTag || query}</span>
+                  <button onClick={() => { setQuery(""); setFilterTag(null); }} style={{ background:"none", border:"none", color:C.textMute, cursor:"pointer", fontFamily:"'DM Sans',sans-serif", fontSize:12, textDecoration:"underline" }}>clear</button>
                 </div>
               )}
+              {/* Bulk action bar */}
+              {selectedIds.size > 0 && (
+                <BulkActionBar
+                  count={selectedIds.size}
+                  total={sorted.length}
+                  onSelectAll={selectAll}
+                  onClear={clearSelection}
+                  onApply={bulkApply}
+                />
+              )}
+
               {viewMode === "gallery" ? (
                 <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(220px,1fr))", gap:16 }}>
-                  {sorted.map(p => <PhotoCard key={p.id} photo={p} onClick={() => setSelected(p.id)} />)}
+                  {sorted.map(p => (
+                    <PhotoCard key={p.id} photo={p}
+                      isSelected={selectedIds.has(p.id)}
+                      anySelected={selectedIds.size > 0}
+                      onToggleSelect={toggleSelect}
+                      onClick={() => { if (selectedIds.size > 0) toggleSelect(p.id); else setSelected(p.id); }}
+                    />
+                  ))}
                 </div>
               ) : (
-                <PhotoList photos={sorted} onSelect={id => setSelected(id)} />
+                <PhotoList
+                  photos={sorted}
+                  onSelect={id => { if (selectedIds.size > 0) toggleSelect(id); else setSelected(id); }}
+                  selectedIds={selectedIds}
+                  onToggleSelect={toggleSelect}
+                />
               )}
             </>
           )}

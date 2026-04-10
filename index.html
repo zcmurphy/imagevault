@@ -33,10 +33,6 @@
     #loading .msg { font-size: 13px; color: #8e9ab0; }
     @keyframes spin { to { transform: rotate(360deg); } }
   </style>
-
-  <!-- Babel standalone: in-browser JSX transpilation -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.10/babel.min.js"
-          crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 </head>
 <body>
 
@@ -49,89 +45,79 @@
 
   <div id="root"></div>
 
-  <script type="module">
-    const REACT     = "https://esm.sh/react@18.3.1";
-    const REACT_DOM = "https://esm.sh/react-dom@18.3.1";
+  <!--
+    Scripts at end of body — guaranteed to execute in order after DOM is ready.
+    React and ReactDOM load as UMD globals (window.React / window.ReactDOM).
+    Babel loads next, then our inline script runs last.
+  -->
+  <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone@7.23.10/babel.min.js" crossorigin></script>
 
-    // Import React first so we can expose it as a global.
-    // Babel's classic JSX transform emits React.createElement() calls —
-    // the transpiled blob module needs React in its own scope.
-    // We achieve this by prepending "const React = [imported module]"
-    // directly into the transpiled source before creating the blob.
-    const ReactModule    = await import(REACT);
-    const ReactDOMModule = await import(`${REACT_DOM}/client`);
-
-    // Configure Babel — use the classic runtime (default).
-    // We inject React into the blob ourselves via a prepended const.
-    window.Babel.registerPreset("app", {
+  <script>
+    Babel.registerPreset("app", {
       presets: [
-        [window.Babel.availablePresets["env"], {
-          targets:  { esmodules: true },
-          modules:  false,
+        [Babel.availablePresets["env"], {
+          targets: { esmodules: true },
+          modules: false,
         }],
-        [window.Babel.availablePresets["react"], {
-          runtime: "classic",   // emits React.createElement — React must be in scope
+        [Babel.availablePresets["react"], {
+          runtime: "classic",
         }],
       ],
     });
 
     async function loadApp() {
-      // ── 1. Fetch the JSX source ──────────────────────────────────────────────
+      // 1. Fetch JSX source
       const res = await fetch("./photovault.jsx");
-      if (!res.ok) throw new Error(`Failed to load photovault.jsx: ${res.status} ${res.statusText}`);
+      if (!res.ok) throw new Error(
+        `Failed to load photovault.jsx: ${res.status} ${res.statusText}`
+      );
       const source = await res.text();
 
-      // ── 2. Transpile JSX → ES module JS ─────────────────────────────────────
-      const { code } = window.Babel.transform(source, {
+      // 2. Transpile JSX → JS
+      const { code } = Babel.transform(source, {
         presets:    ["app"],
         filename:   "photovault.jsx",
         sourceType: "module",
       });
 
-      // ── 3. Rewrite bare specifiers → full CDN URLs ───────────────────────────
-      // Blob URL modules don't inherit the page's import map, so every
-      // "react" / "react-dom" import must become an absolute CDN URL.
+      // 3. Strip react/react-dom import statements — already on window.*
       let patched = code
-        .replace(/from\s+"react-dom\/client"/g, `from "${REACT_DOM}/client"`)
-        .replace(/from\s+'react-dom\/client'/g, `from '${REACT_DOM}/client'`)
-        .replace(/from\s+"react-dom"/g,         `from "${REACT_DOM}"`)
-        .replace(/from\s+'react-dom'/g,         `from '${REACT_DOM}'`)
-        .replace(/from\s+"react"/g,             `from "${REACT}"`)
-        .replace(/from\s+'react'/g,             `from '${REACT}'`);
+        .replace(/^\s*import\s+.*?from\s+['"]react['"]\s*;?\s*$/gm, "")
+        .replace(/^\s*import\s+.*?from\s+['"]react-dom[\w/]*['"]\s*;?\s*$/gm, "");
 
-      // ── 4. Inject React into the blob's own scope ────────────────────────────
-      // Babel's classic transform calls React.createElement() at the top level.
-      // Even though we imported React above, ES module scope is isolated —
-      // the blob cannot see variables from the parent module.
-      // Prepending this line gives the blob its own `React` binding that
-      // resolves to the same already-cached module (no extra network request).
-      patched = `import React from "${REACT}";\n` + patched;
+      // 4. Inject React globals into the blob's isolated ES module scope
+      patched = `
+const React    = window.React;
+const ReactDOM = window.ReactDOM;
+const { useState, useEffect, useRef, useCallback, useMemo, useContext, useReducer } = window.React;
+` + patched;
 
-      // ── 5. Load as a blob ES module and mount ────────────────────────────────
+      // 5. Import the blob module and mount the app
       const blob    = new Blob([patched], { type: "application/javascript" });
       const blobUrl = URL.createObjectURL(blob);
       const mod     = await import(blobUrl);
       URL.revokeObjectURL(blobUrl);
 
-      const App  = mod.default;
-      const root = ReactDOMModule.createRoot(document.getElementById("root"));
-      root.render(ReactModule.createElement(App));
+      const root = ReactDOM.createRoot(document.getElementById("root"));
+      root.render(React.createElement(mod.default));
 
       document.getElementById("loading").style.display = "none";
     }
 
     loadApp().catch(err => {
       document.getElementById("loading").innerHTML = `
-        <div style="text-align:center;padding:40px;max-width:480px">
+        <div style="text-align:center;padding:40px;max-width:500px">
           <div style="font-size:36px;margin-bottom:16px">⚠</div>
           <div style="font-size:18px;font-weight:700;color:#1c2133;margin-bottom:8px">Failed to load PhotoVault</div>
           <div style="font-size:13px;color:#526080;margin-bottom:20px;line-height:1.6">${err.message}</div>
           <div style="font-size:12px;color:#8e9ab0;line-height:1.6">
             Make sure <code style="background:#eef0f4;padding:2px 6px;border-radius:4px">photovault.jsx</code>
-            is in the same folder as this file and is served over HTTPS
-            (not <code style="background:#eef0f4;padding:2px 6px;border-radius:4px">file://</code>).
+            is in the same folder and the site is served over HTTPS.
           </div>
-          <button onclick="location.reload()" style="margin-top:20px;padding:9px 20px;background:#6495ed;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">
+          <button onclick="location.reload()"
+            style="margin-top:20px;padding:9px 20px;background:#6495ed;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">
             Retry
           </button>
         </div>
