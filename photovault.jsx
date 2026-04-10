@@ -307,6 +307,18 @@ async function extractExif(file) {
 }
 
 // ── Storage (key-value) ────────────────────────────────────────────────────────
+// window.storage is available in the Claude artifact environment.
+// On GitHub Pages / local dev we fall back to a localStorage-backed shim.
+const storage = (() => {
+  if (window.storage) return window.storage;
+  // localStorage shim — same API surface as window.storage
+  return {
+    set: async (key, value) => { try { localStorage.setItem(key, value); return { key, value }; } catch(e) { console.error("storage.set:", e); return null; } },
+    get: async (key) => { try { const v = localStorage.getItem(key); return v !== null ? { key, value: v } : null; } catch { return null; } },
+    delete: async (key) => { try { localStorage.removeItem(key); return { key, deleted: true }; } catch { return null; } },
+    list: async (prefix) => { try { const keys = Object.keys(localStorage).filter(k => !prefix || k.startsWith(prefix)); return { keys }; } catch { return { keys: [] }; } },
+  };
+})();
 async function savePhoto(photo) {
   try {
     const idx = await loadIndex();
@@ -314,13 +326,13 @@ async function savePhoto(photo) {
       id: photo.id, meta: photo.meta, tags: photo.tags,
       comment: photo.comment, program: photo.program, uploadedAt: photo.uploadedAt,
     };
-    await window.storage.set("pv:index", JSON.stringify(idx));
-    await window.storage.set(`pv:img:${photo.id}`, photo.dataUrl);
+    await storage.set("pv:index", JSON.stringify(idx));
+    await storage.set(`pv:img:${photo.id}`, photo.dataUrl);
   } catch(e) { console.error(e); }
 }
 
 async function loadIndex() {
-  try { const r = await window.storage.get("pv:index"); return r ? JSON.parse(r.value) : {}; }
+  try { const r = await storage.get("pv:index"); return r ? JSON.parse(r.value) : {}; }
   catch { return {}; }
 }
 
@@ -329,7 +341,7 @@ async function loadAllPhotos() {
   const out = [];
   for (const id of Object.keys(idx)) {
     try {
-      const r = await window.storage.get(`pv:img:${id}`);
+      const r = await storage.get(`pv:img:${id}`);
       if (r) out.push({ ...idx[id], dataUrl: r.value });
     } catch {}
   }
@@ -339,8 +351,8 @@ async function loadAllPhotos() {
 async function deletePhoto(id) {
   try {
     const idx = await loadIndex(); delete idx[id];
-    await window.storage.set("pv:index", JSON.stringify(idx));
-    await window.storage.delete(`pv:img:${id}`);
+    await storage.set("pv:index", JSON.stringify(idx));
+    await storage.delete(`pv:img:${id}`);
   } catch(e) { console.error(e); }
 }
 
@@ -353,59 +365,183 @@ async function updatePhoto(id, updates) {
         updates = { ...updates, meta: { ...idx[id].meta, ...updates.meta } };
       }
       idx[id] = { ...idx[id], ...updates };
-      await window.storage.set("pv:index", JSON.stringify(idx));
+      await storage.set("pv:index", JSON.stringify(idx));
     }
   } catch(e) { console.error(e); }
 }
 
-// ── Three-layer duplicate checker ────────────────────────────────────────────
-// Returns { duplicate: bool, reason: string, matchName: string, detail: string }
+// ── Four-layer duplicate checker ─────────────────────────────────────────────
 //
-//  Layer 1 — SHA-256 content hash   : exact byte-for-byte match (any format)
-//  Layer 2 — Histogram chi-squared  : rotation-invariant colour/tone gate
-//  Layer 3 — Multi-rotation dHash   : structural confirmation at 0/90/180/270°
+//  Layer 1 — Filename + file size    : cheapest gate, catches obvious re-uploads
+//  Layer 2 — SHA-256 content hash    : exact byte match, catches renames/re-downloads
+//  Layer 3 — Perceptual hash (dHash) : catches resized/rotated/re-exported versions
+//  Layer 4 — Luminance histogram     : catches format conversions (JPEG→PNG etc.)
 //
-// A file must pass ALL three layers to be considered unique.
-async function checkDuplicate(contentHash, fingerprint) {
-  const idx = await loadIndex();
+// Returns { duplicate: bool, layer: 1|2|3|4, reason, detail, matchId, matchRecord }
+// matchRecord is the full stored photo record so the UI can show a side-by-side.
+//
+async function checkDuplicate(file, contentHash, fingerprint) {
+  const idx      = await loadIndex();
   const existing = Object.values(idx);
 
-  // ── Layer 1: exact content match ─────────────────────────────────────────
-  const exactMatch = existing.find(p => p.meta?.contentHash === contentHash);
-  if (exactMatch) {
-    return { duplicate: true, reason: "exact",
-             matchName: exactMatch.meta.originalName,
-             detail: "identical file content" };
+  // ── Layer 1: filename + file size ────────────────────────────────────────
+  const nameAndSizeMatch = existing.find(p =>
+    p.meta?.originalName === file.name && p.meta?.size === file.size
+  );
+  if (nameAndSizeMatch) {
+    return {
+      duplicate: true, layer: 1,
+      reason:  "Filename & size match",
+      detail:  `"${file.name}" (${(file.size/1024).toFixed(1)} KB) already exists`,
+      matchId: nameAndSizeMatch.id,
+      matchRecord: nameAndSizeMatch,
+    };
+  }
+
+  // ── Layer 2: SHA-256 content hash ────────────────────────────────────────
+  const hashMatch = existing.find(p => p.meta?.contentHash === contentHash);
+  if (hashMatch) {
+    return {
+      duplicate: true, layer: 2,
+      reason:  "Identical file content",
+      detail:  `SHA-256 hash matches "${hashMatch.meta.originalName}" — same bytes, possibly renamed or re-downloaded`,
+      matchId: hashMatch.id,
+      matchRecord: hashMatch,
+    };
   }
 
   if (!fingerprint) return { duplicate: false };
   const { histogram: inHist, dHashes: inDHashes } = fingerprint;
 
-  // ── Layers 2 + 3: perceptual check against every stored image ────────────
+  // ── Layers 3 + 4: perceptual — compare against every stored image ─────────
   for (const p of existing) {
-    if (!p.meta?.histogram || !p.meta?.dHashes) continue;
+    // Layer 3: multi-rotation dHash
+    if (p.meta?.dHashes) {
+      const bestDist = bestRotationDistance(inDHashes[0], p.meta.dHashes);
+      if (bestDist <= DHASH_THRESHOLD) {
+        const rotation = [0, 90, 180, 270].find(
+          (deg, i) => hammingDistance(inDHashes[0], p.meta.dHashes[i]) === bestDist
+        );
+        return {
+          duplicate: true, layer: 3,
+          reason:  "Perceptual match (visual structure)",
+          detail:  `dHash distance ${bestDist}/64 bits${rotation ? ` — appears rotated ${rotation}°` : ""} — likely resized, re-compressed, or re-exported`,
+          matchId: p.id,
+          matchRecord: p,
+        };
+      }
+    }
 
-    // Layer 2 — histogram gate (fast, rotation-invariant)
-    const storedHist = new Float32Array(p.meta.histogram);
-    const histDist   = chiSquaredDistance(inHist, storedHist);
-    if (histDist > HISTOGRAM_THRESHOLD) continue; // histograms too different → skip
-
-    // Layer 3 — multi-rotation dHash confirmation
-    const bestDist = bestRotationDistance(inDHashes[0], p.meta.dHashes);
-    if (bestDist <= DHASH_THRESHOLD) {
-      const rotation = [0,90,180,270].find(
-        (deg, i) => hammingDistance(inDHashes[0], p.meta.dHashes[i]) === bestDist
-      );
-      return {
-        duplicate: true,
-        reason: "perceptual",
-        matchName: p.meta.originalName,
-        detail: `histogram Δ=${histDist.toFixed(4)}, dHash ${bestDist} bits apart${rotation !== 0 ? ` (rotated ${rotation}°)` : ""}`,
-      };
+    // Layer 4: luminance histogram (format-conversion detection)
+    if (p.meta?.histogram) {
+      const storedHist = new Float32Array(p.meta.histogram);
+      const histDist   = chiSquaredDistance(inHist, storedHist);
+      if (histDist <= HISTOGRAM_THRESHOLD) {
+        return {
+          duplicate: true, layer: 4,
+          reason:  "Tonal histogram match (possible format conversion)",
+          detail:  `Histogram distance ${histDist.toFixed(5)} — tonal distribution nearly identical, possibly JPEG↔PNG↔WEBP conversion`,
+          matchId: p.id,
+          matchRecord: p,
+        };
+      }
     }
   }
 
   return { duplicate: false };
+}
+
+
+// ── Duplicate Review Modal ────────────────────────────────────────────────────
+// Shows a side-by-side comparison of the incoming image vs the stored duplicate.
+// User can Skip (don't ingest) or Ingest Anyway (override).
+function DuplicateReviewModal({ incoming, match, dupeResult, onSkip, onIngestAnyway }) {
+  const F = ({ label, value }) => (
+    <div style={{ display:"flex", justifyContent:"space-between", marginBottom:5, gap:8 }}>
+      <span style={{ color:C.textMute, fontFamily:"'DM Sans',sans-serif", fontSize:11, flexShrink:0 }}>{label}</span>
+      <span style={{ color:C.textMid, fontFamily:"'DM Sans',sans-serif", fontSize:11, textAlign:"right", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", maxWidth:160 }} title={value}>{value || "—"}</span>
+    </div>
+  );
+
+  const layerColors = { 1:"#708090", 2:"#708090", 3:"#c0392b", 4:"#e67e22" };
+  const layerColor  = layerColors[dupeResult.layer] || C.textMid;
+
+  return (
+    <div style={{ position:"fixed", inset:0, background:"rgba(54,69,79,0.55)", backdropFilter:"blur(6px)", zIndex:300, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
+      <div style={{ background:C.surface, borderRadius:14, border:`1px solid ${C.border}`, width:"min(860px,96vw)", maxHeight:"92vh", overflowY:"auto", boxShadow:"0 24px 64px rgba(54,69,79,0.25)" }}>
+
+        {/* Header */}
+        <div style={{ padding:"18px 24px 0", borderBottom:`1px solid ${C.border}`, paddingBottom:14 }}>
+          <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:6 }}>
+            <div style={{ background:`${layerColor}18`, border:`1px solid ${layerColor}44`, borderRadius:6, padding:"2px 10px" }}>
+              <span style={{ color:layerColor, fontFamily:"'DM Sans',sans-serif", fontSize:11, fontWeight:700, letterSpacing:"0.06em", textTransform:"uppercase" }}>
+                Layer {dupeResult.layer} — {dupeResult.reason}
+              </span>
+            </div>
+          </div>
+          <div style={{ color:C.textMid, fontFamily:"'DM Sans',sans-serif", fontSize:13, lineHeight:1.5 }}>
+            {dupeResult.detail}
+          </div>
+        </div>
+
+        {/* Side-by-side */}
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:0 }}>
+
+          {/* ── Incoming image */}
+          <div style={{ padding:"20px 20px 20px 24px", borderRight:`1px solid ${C.border}` }}>
+            <div style={{ color:C.textMute, fontFamily:"'DM Sans',sans-serif", fontSize:10, fontWeight:700, letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:10 }}>
+              Incoming — to be ingested
+            </div>
+            <div style={{ background:C.surface2, borderRadius:8, overflow:"hidden", marginBottom:14, aspectRatio:"4/3", display:"flex", alignItems:"center", justifyContent:"center" }}>
+              <img src={incoming.dataUrl} alt="" style={{ maxWidth:"100%", maxHeight:"100%", objectFit:"contain" }} />
+            </div>
+            <div style={{ background:C.surface2, borderRadius:8, padding:"10px 12px" }}>
+              <F label="Filename" value={incoming.file.name} />
+              <F label="File size" value={incoming.file.size > 1048576 ? `${(incoming.file.size/1048576).toFixed(2)} MB` : `${(incoming.file.size/1024).toFixed(1)} KB`} />
+              <F label="Type" value={incoming.file.type} />
+              <F label="Dimensions" value={incoming.width ? `${incoming.width} × ${incoming.height} px` : "—"} />
+              <F label="Megapixels" value={incoming.megapixels ? `${incoming.megapixels} MP` : "—"} />
+            </div>
+          </div>
+
+          {/* ── Stored duplicate */}
+          <div style={{ padding:"20px 24px 20px 20px" }}>
+            <div style={{ color:C.textMute, fontFamily:"'DM Sans',sans-serif", fontSize:10, fontWeight:700, letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:10 }}>
+              Already in vault
+            </div>
+            <div style={{ background:C.surface2, borderRadius:8, overflow:"hidden", marginBottom:14, aspectRatio:"4/3", display:"flex", alignItems:"center", justifyContent:"center" }}>
+              <img src={match.dataUrl} alt="" style={{ maxWidth:"100%", maxHeight:"100%", objectFit:"contain" }} />
+            </div>
+            <div style={{ background:C.surface2, borderRadius:8, padding:"10px 12px" }}>
+              <F label="Filename" value={match.meta?.originalName || match.meta?.name} />
+              <F label="File size" value={match.meta?.sizeFormatted} />
+              <F label="Type" value={match.meta?.type} />
+              <F label="Dimensions" value={match.meta?.width ? `${match.meta.width} × ${match.meta.height} px` : "—"} />
+              <F label="Megapixels" value={match.meta?.megapixels ? `${match.meta.megapixels} MP` : "—"} />
+              <F label="Program" value={match.program} />
+              <F label="Tags" value={match.tags?.join(", ")} />
+              <F label="Ingested" value={match.uploadedAt ? new Date(match.uploadedAt).toLocaleString() : "—"} />
+            </div>
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div style={{ padding:"16px 24px 20px", borderTop:`1px solid ${C.border}`, display:"flex", gap:10, justifyContent:"flex-end", alignItems:"center" }}>
+          <span style={{ color:C.textMute, fontFamily:"'DM Sans',sans-serif", fontSize:12, flex:1 }}>
+            How would you like to proceed?
+          </span>
+          <button onClick={onSkip}
+            style={{ padding:"9px 20px", background:C.surface2, color:C.textMid, border:`1px solid ${C.border}`, borderRadius:7, cursor:"pointer", fontFamily:"'DM Sans',sans-serif", fontSize:13, fontWeight:600 }}>
+            Skip — don't ingest
+          </button>
+          <button onClick={onIngestAnyway}
+            style={{ padding:"9px 20px", background:C.blue, color:"#fff", border:"none", borderRadius:7, cursor:"pointer", fontFamily:"'DM Sans',sans-serif", fontSize:13, fontWeight:600, boxShadow:`0 2px 8px rgba(100,149,237,0.35)` }}>
+            Ingest anyway
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 // ── TagPill ────────────────────────────────────────────────────────────────────
@@ -451,54 +587,75 @@ function UploadModal({ onUpload, onClose }) {
   const [progress, setProgress]     = useState(0);
   const [statusMsg, setStatusMsg]   = useState("");
   const [dragOver, setDragOver]     = useState(false);
-  const [duplicates, setDuplicates] = useState([]);
+  // Duplicate review state — pauses the loop for user decision
+  const [dupeReview, setDupeReview] = useState(null); // { incoming, match, dupeResult, resolve }
 
   const handleFiles = fl => {
     const arr = Array.from(fl).filter(f => f.type.startsWith("image/"));
     setFiles(arr); setPreviews(arr.map(f => URL.createObjectURL(f)));
-    setDuplicates([]);
+    setDupeReview(null);
   };
+
+  // Returns a Promise that resolves to true (ingest anyway) or false (skip)
+  const askUser = (incoming, matchRecord, dataUrl, dupeResult) =>
+    new Promise(resolve => {
+      setDupeReview({ incoming: { ...incoming, dataUrl }, match: matchRecord, dupeResult, resolve });
+    });
 
   const upload = async () => {
     if (!files.length) return;
-    setProcessing(true); setDuplicates([]);
+    setProcessing(true);
     const results = [], skipped = [];
 
     for (let i = 0; i < files.length; i++) {
       const f = files[i];
       setProgress(Math.round(((i + 0.3) / files.length) * 100));
 
-      // ── Layer 1: SHA-256 exact content hash
+      // ── Read to dataUrl first (stable base64, no revocation races)
+      setStatusMsg(`Reading ${f.name}…`);
+      const dataUrl = await new Promise(res => {
+        const r = new FileReader(); r.onload = e => res(e.target.result); r.readAsDataURL(f);
+      });
+
+      // ── Layer 2: SHA-256 content hash
       setStatusMsg(`Hashing ${f.name}…`);
       const contentHash = await computeContentHash(f);
 
-      // ── Layers 2+3: perceptual fingerprint (histogram + multi-rotation dHash)
+      // ── Layers 3+4: perceptual fingerprint
       setStatusMsg(`Fingerprinting ${f.name}…`);
       let fingerprint = null;
       try { fingerprint = await computePerceptualFingerprint(f); }
       catch(e) { console.warn("Fingerprint failed:", e); }
 
-      // ── Duplicate check (all three layers)
+      // ── All 4 layers
       setStatusMsg(`Checking ${f.name} for duplicates…`);
-      const dupeResult = await checkDuplicate(contentHash, fingerprint);
+      const dupeResult = await checkDuplicate(f, contentHash, fingerprint);
+
       if (dupeResult.duplicate) {
-        const reason = dupeResult.reason === "exact"
-          ? `exact duplicate of "${dupeResult.matchName}"`
-          : `visual duplicate of "${dupeResult.matchName}" — ${dupeResult.detail}`;
-        skipped.push({ name: f.name, reason });
-        setProgress(Math.round(((i + 1) / files.length) * 100));
-        continue;
+        // Load the stored duplicate's image data for the comparison modal
+        let matchRecord = dupeResult.matchRecord;
+        try {
+          const imgData = await storage.get(`pv:img:${dupeResult.matchId}`);
+          matchRecord = { ...matchRecord, dataUrl: imgData?.value || null };
+        } catch {}
+
+        // Pre-extract dims for incoming so modal can show them
+        const incomingMeta = await extractMetadataFromDataUrl(dataUrl, f);
+        const incoming = { file: f, width: incomingMeta.width, height: incomingMeta.height, megapixels: incomingMeta.megapixels };
+
+        // Pause the loop and wait for the user's decision
+        const proceed = await askUser(incoming, matchRecord, dataUrl, dupeResult);
+        setDupeReview(null);
+
+        if (!proceed) {
+          skipped.push(f.name);
+          setProgress(Math.round(((i + 1) / files.length) * 100));
+          continue;
+        }
+        // User chose "Ingest anyway" — fall through to normal ingest below
       }
 
       setStatusMsg(`Processing ${f.name}…`);
-
-      // Read file into dataUrl FIRST — gives us a stable base64 source
-      // that can't be revoked, avoiding any race with createObjectURL
-      const dataUrl = await new Promise(res => {
-        const r = new FileReader(); r.onload = e => res(e.target.result); r.readAsDataURL(f);
-      });
-
-      // Extract image dimensions from the stable dataUrl
       const meta = await extractMetadataFromDataUrl(dataUrl, f);
       const photoId = uid();
       const ext     = f.name.split(".").pop().toLowerCase();
@@ -509,8 +666,7 @@ function UploadModal({ onUpload, onClose }) {
       meta.histogram      = fingerprint ? Array.from(fingerprint.histogram) : null;
       meta.dHashes        = fingerprint ? fingerprint.dHashes : null;
 
-      // Extract EXIF data (reads from original File object — safe, file is not revoked)
-      setStatusMsg(`Reading EXIF data for ${f.name}…`);
+      setStatusMsg(`Reading EXIF for ${f.name}…`);
       meta.exif = await extractExif(f);
 
       const photo = { id:photoId, meta, tags:[...tags], comment, program, dataUrl, uploadedAt:new Date().toISOString() };
@@ -521,7 +677,6 @@ function UploadModal({ onUpload, onClose }) {
     }
 
     previews.forEach(URL.revokeObjectURL);
-    if (skipped.length) setDuplicates(skipped);
     setProcessing(false); setStatusMsg("");
     if (results.length) onUpload(results);
   };
@@ -531,6 +686,7 @@ function UploadModal({ onUpload, onClose }) {
   );
 
   return (
+    <>
     <div style={{ position:"fixed", inset:0, background:"rgba(28,33,51,0.32)", backdropFilter:"blur(6px)", zIndex:100, display:"flex", alignItems:"center", justifyContent:"center" }}
       onClick={e => e.target === e.currentTarget && onClose()}>
       <div style={{ background:C.surface, borderRadius:16, border:`1px solid ${C.border}`, width:560, maxWidth:"95vw", maxHeight:"90vh", overflowY:"auto", boxShadow:"0 20px 60px rgba(28,33,80,0.16)", padding:32 }}>
@@ -599,19 +755,6 @@ function UploadModal({ onUpload, onClose }) {
           />
         </div>
 
-        {/* Duplicate warning */}
-        {duplicates.length > 0 && (
-          <div style={{ background:"#fff8e6", border:"1px solid #f0d080", borderRadius:8, padding:"10px 14px", marginBottom:16, display:"flex", gap:10, alignItems:"flex-start" }}>
-            <span style={{ fontSize:16, flexShrink:0 }}>⚠</span>
-            <div>
-              <div style={{ color:"#7a5800", fontFamily:"'DM Sans',sans-serif", fontSize:12, fontWeight:700, marginBottom:3 }}>
-                {duplicates.length} duplicate{duplicates.length !== 1 ? "s" : ""} skipped
-              </div>
-              <div style={{ color:"#9a7200", fontFamily:"'DM Sans',sans-serif", fontSize:11 }}>{duplicates.join(", ")}</div>
-            </div>
-          </div>
-        )}
-
         {processing ? (
           <div>
             <div style={{ background:C.surface2, borderRadius:8, height:6, marginBottom:8, overflow:"hidden" }}>
@@ -628,6 +771,18 @@ function UploadModal({ onUpload, onClose }) {
         )}
       </div>
     </div>
+
+    {/* Duplicate review modal — renders over the upload modal */}
+    {dupeReview && (
+      <DuplicateReviewModal
+        incoming={dupeReview.incoming}
+        match={dupeReview.match}
+        dupeResult={dupeReview.dupeResult}
+        onSkip={() => dupeReview.resolve(false)}
+        onIngestAnyway={() => dupeReview.resolve(true)}
+      />
+    )}
+    </>
   );
 }
 
@@ -1243,7 +1398,7 @@ function PhotoDetail({ photo, onClose, onUpdate, onDelete }) {
 }
 
 // ── Photo List ────────────────────────────────────────────────────────────────
-function PhotoList({ photos, onSelect }) {
+function PhotoList({ photos, onSelect, selectedIds = new Set(), onToggleSelect = () => {} }) {
   const [sortCol, setSortCol] = useState("Ingested");
   const [sortDir, setSortDir] = useState("desc"); // "asc" | "desc"
 
